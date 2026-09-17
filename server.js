@@ -472,14 +472,33 @@ function buildYtFormatSelector(options) {
   return [`bv*${heightFilter}+ba`, `b${heightFilter}`, "bv*+ba/b"].join("/");
 }
 
+function getCommonYtDlpArgs() {
+  const args = [
+    "--no-playlist",
+    "--no-warnings",
+    "--extractor-args",
+    "youtube:player_client=ios,android,mweb",
+  ];
+
+  const cookiesPath =
+    process.env.YTDLP_COOKIES ||
+    (fs.existsSync(path.join(__dirname, "cookies.txt"))
+      ? path.join(__dirname, "cookies.txt")
+      : null);
+  if (cookiesPath) {
+    args.push("--cookies", cookiesPath);
+  }
+
+  return args;
+}
+
 async function inspectViaExtractor(target) {
   const cleanTarget = normalizeMediaUrl(target);
   await assertSafeUrl(cleanTarget);
 
   const { stdout } = await runYtDlp([
+    ...getCommonYtDlpArgs(),
     "--dump-single-json",
-    "--no-playlist",
-    "--no-warnings",
     "--skip-download",
     cleanTarget,
   ]);
@@ -531,7 +550,7 @@ async function downloadViaExtractorToTempProgress(jobId, target, options, sugges
   const outTemplate = path.join(TMP_DIR, `${id}.%(ext)s`);
   const opts = options || { mode: "video", height: 0, container: "mp4", audioFormat: "mp3" };
 
-  const args = ["--no-playlist", "--no-warnings", "-o", outTemplate];
+  const args = [...getCommonYtDlpArgs(), "-o", outTemplate];
 
   if (opts.mode === "audio") {
     args.push(
