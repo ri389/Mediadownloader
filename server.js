@@ -289,67 +289,84 @@ setInterval(() => {
   }
 }, 60000);
 
+function normalizeMediaUrl(urlStr) {
+  try {
+    const u = new URL(urlStr);
+    if (u.hostname.includes("youtube.com") || u.hostname.includes("youtu.be")) {
+      if (u.pathname === "/watch" && u.searchParams.has("v")) {
+        const videoId = u.searchParams.get("v");
+        return `https://www.youtube.com/watch?v=${videoId}`;
+      }
+      if (u.hostname.includes("youtu.be")) {
+        const videoId = u.pathname.replace(/^\//, "");
+        if (videoId) return `https://www.youtube.com/watch?v=${videoId}`;
+      }
+    }
+    return urlStr;
+  } catch {
+    return urlStr;
+  }
+}
+
 function runYtDlp(args, onProgress) {
-  return new Promise((resolve, reject) => {
-    const ytArgs = [
-      "-m",
-      "yt_dlp",
-      "--js-runtimes",
-      "node",
-      ...(FFMPEG_DIR ? ["--ffmpeg-location", FFMPEG_DIR] : []),
-      ...args,
-    ];
+  const commonArgs = [
+    "--js-runtimes",
+    "node",
+    ...(FFMPEG_DIR ? ["--ffmpeg-location", FFMPEG_DIR] : []),
+    ...args,
+  ];
 
-    const child = spawn(PYTHON, ytArgs, { windowsHide: true });
+  const tryExec = (cmd, cmdArgs) => {
+    return new Promise((resolve, reject) => {
+      const child = spawn(cmd, cmdArgs, { windowsHide: true });
+      let stdout = "";
+      let stderr = "";
 
-    let stdout = "";
-    let stderr = "";
+      const handleLine = (line) => {
+        if (!onProgress) return;
+        const m = /\[download\]\s+([\d\.]+)%\s+of\s+([^\s]+)(?:\s+at\s+([^\s]+))?(?:\s+ETA\s+([^\s]+))?/i.exec(line);
+        if (m) {
+          onProgress({
+            percent: parseFloat(m[1]),
+            totalSize: m[2] || "",
+            speed: m[3] || "",
+            eta: m[4] || "",
+          });
+        }
+      };
 
-    const handleLine = (line) => {
-      if (!onProgress) return;
-      const m = /\[download\]\s+([\d\.]+)%\s+of\s+([^\s]+)(?:\s+at\s+([^\s]+))?(?:\s+ETA\s+([^\s]+))?/i.exec(line);
-      if (m) {
-        onProgress({
-          percent: parseFloat(m[1]),
-          totalSize: m[2] || "",
-          speed: m[3] || "",
-          eta: m[4] || "",
-        });
-      }
-    };
+      child.stdout.on("data", (chunk) => {
+        const str = chunk.toString();
+        stdout += str;
+        if (onProgress) {
+          const lines = str.split(/[\r\n]+/);
+          for (const l of lines) handleLine(l);
+        }
+      });
+      child.stderr.on("data", (chunk) => {
+        const str = chunk.toString();
+        stderr += str;
+        if (onProgress) {
+          const lines = str.split(/[\r\n]+/);
+          for (const l of lines) handleLine(l);
+        }
+      });
 
-    child.stdout.on("data", (chunk) => {
-      const str = chunk.toString();
-      stdout += str;
-      if (onProgress) {
-        const lines = str.split(/[\r\n]+/);
-        for (const l of lines) handleLine(l);
-      }
+      child.on("error", reject);
+      child.on("close", (code) => {
+        if (code === 0) resolve({ stdout, stderr });
+        else {
+          const lines = (stderr || stdout).trim().split("\n").filter(Boolean);
+          const msg = lines[lines.length - 1] || "Site non supporté ou média inaccessible.";
+          reject(new Error(msg.replace(/^ERROR:\s*/i, "")));
+        }
+      });
     });
-    child.stderr.on("data", (chunk) => {
-      const str = chunk.toString();
-      stderr += str;
-      if (onProgress) {
-        const lines = str.split(/[\r\n]+/);
-        for (const l of lines) handleLine(l);
-      }
-    });
-    child.on("error", (err) => {
-      if (err.code === "ENOENT") {
-        reject(new Error("Python introuvable. Installe Python puis yt-dlp."));
-      } else {
-        reject(err);
-      }
-    });
-    child.on("close", (code) => {
-      if (code === 0) resolve({ stdout, stderr });
-      else {
-        const lines = (stderr || stdout).trim().split("\n").filter(Boolean);
-        const msg = lines[lines.length - 1] || "Site non supporté ou média inaccessible.";
-        reject(new Error(msg.replace(/^ERROR:\s*/i, "")));
-      }
-    });
-  });
+  };
+
+  return tryExec(PYTHON, ["-m", "yt_dlp", ...commonArgs])
+    .catch(() => tryExec("yt-dlp", commonArgs))
+    .catch(() => tryExec("python3", ["-m", "yt_dlp", ...commonArgs]));
 }
 
 function formatDuration(seconds) {
@@ -456,14 +473,15 @@ function buildYtFormatSelector(options) {
 }
 
 async function inspectViaExtractor(target) {
-  await assertSafeUrl(target);
+  const cleanTarget = normalizeMediaUrl(target);
+  await assertSafeUrl(cleanTarget);
 
   const { stdout } = await runYtDlp([
     "--dump-single-json",
     "--no-playlist",
     "--no-warnings",
     "--skip-download",
-    target,
+    cleanTarget,
   ]);
 
   let info;
@@ -507,7 +525,8 @@ async function inspectViaExtractor(target) {
 }
 
 async function downloadViaExtractorToTempProgress(jobId, target, options, suggestedTitle) {
-  await assertSafeUrl(target);
+  const cleanTarget = normalizeMediaUrl(target);
+  await assertSafeUrl(cleanTarget);
   const id = crypto.randomBytes(8).toString("hex");
   const outTemplate = path.join(TMP_DIR, `${id}.%(ext)s`);
   const opts = options || { mode: "video", height: 0, container: "mp4", audioFormat: "mp3" };
@@ -533,7 +552,7 @@ async function downloadViaExtractorToTempProgress(jobId, target, options, sugges
     );
   }
 
-  args.push(target);
+  args.push(cleanTarget);
 
   const job = activeJobs.get(jobId);
 
