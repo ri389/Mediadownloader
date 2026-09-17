@@ -472,6 +472,41 @@ function buildYtFormatSelector(options) {
   return [`bv*${heightFilter}+ba`, `b${heightFilter}`, "bv*+ba/b"].join("/");
 }
 
+// Resolve cookies file path once at startup
+let COOKIES_FILE_PATH = null;
+
+(function initCookies() {
+  // Priority 1: base64-encoded cookies content in env var (ideal for Render/cloud)
+  if (process.env.YTDLP_COOKIES_B64) {
+    try {
+      const decoded = Buffer.from(process.env.YTDLP_COOKIES_B64, "base64").toString("utf-8");
+      const tmpCookies = path.join(os.tmpdir(), "ytdlp_cookies.txt");
+      fs.writeFileSync(tmpCookies, decoded, "utf-8");
+      COOKIES_FILE_PATH = tmpCookies;
+      console.log("[cookies] Loaded from YTDLP_COOKIES_B64 →", tmpCookies);
+    } catch (e) {
+      console.warn("[cookies] Failed to decode YTDLP_COOKIES_B64:", e.message);
+    }
+  }
+  // Priority 2: path to cookies file
+  if (!COOKIES_FILE_PATH && process.env.YTDLP_COOKIES) {
+    if (fs.existsSync(process.env.YTDLP_COOKIES)) {
+      COOKIES_FILE_PATH = process.env.YTDLP_COOKIES;
+      console.log("[cookies] Loaded from YTDLP_COOKIES env path →", COOKIES_FILE_PATH);
+    } else {
+      console.warn("[cookies] YTDLP_COOKIES path not found:", process.env.YTDLP_COOKIES);
+    }
+  }
+  // Priority 3: cookies.txt beside server.js
+  if (!COOKIES_FILE_PATH && fs.existsSync(path.join(__dirname, "cookies.txt"))) {
+    COOKIES_FILE_PATH = path.join(__dirname, "cookies.txt");
+    console.log("[cookies] Loaded from local cookies.txt →", COOKIES_FILE_PATH);
+  }
+  if (!COOKIES_FILE_PATH) {
+    console.warn("[cookies] No cookies found — YouTube may block server requests.");
+  }
+})();
+
 function getCommonYtDlpArgs() {
   const args = [
     "--no-playlist",
@@ -481,13 +516,8 @@ function getCommonYtDlpArgs() {
     "youtube:player_client=mweb,android,tv_embedded,web_creator",
   ];
 
-  const cookiesPath =
-    process.env.YTDLP_COOKIES ||
-    (fs.existsSync(path.join(__dirname, "cookies.txt"))
-      ? path.join(__dirname, "cookies.txt")
-      : null);
-  if (cookiesPath) {
-    args.push("--cookies", cookiesPath);
+  if (COOKIES_FILE_PATH) {
+    args.push("--cookies", COOKIES_FILE_PATH);
   }
 
   return args;
