@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grab — Media Downloader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="glow glow-a" aria-hidden="true"></div>
+  <div class="glow glow-b" aria-hidden="true"></div>
+
+  <main class="shell">
+    <header class="brand">
+      <p class="logo">Grab</p>
+      <h1>Colle un lien. Récupère le fichier.</h1>
+      <p class="lede">YouTube, TikTok, Instagram, Pinterest, et des centaines d’autres — usage perso, en local.</p>
+    </header>
+
+    <form class="grab-form" id="grabForm">
+      <label class="sr-only" for="urlInput">Lien du média</label>
+      <div class="field">
+        <input
+          id="urlInput"
+          name="url"
+          type="url"
+          inputmode="url"
+          autocomplete="off"
+          placeholder="Colle un lien TikTok, Insta, YouTube, Pinterest…"
+          required
+        />
+        <button type="submit" id="inspectBtn">Analyser</button>
+      </div>
+      <p class="hint">Choisis ensuite la résolution, le format, ou l’audio seul.</p>
+    </form>
+
+    <p class="status" id="status" role="status" hidden></p>
+
+    <section class="result" id="result" hidden>
+      <div class="preview-wrap" id="previewWrap"></div>
+      <div class="meta">
+        <p class="filename" id="filename"></p>
+        <p class="details" id="details"></p>
+
+        <div class="options" id="optionsPanel" hidden>
+          <div class="option-group" id="modeGroup">
+            <span class="option-label">Type</span>
+            <div class="segmented" role="group" aria-label="Type de téléchargement">
+              <button type="button" class="seg" data-mode="video" id="modeVideo">Vidéo</button>
+              <button type="button" class="seg" data-mode="audio" id="modeAudio">Audio seul</button>
+            </div>
+          </div>
+
+          <div class="option-row" id="videoOptions">
+            <label class="field-select">
+              <span class="option-label">Résolution</span>
+              <select id="resolutionSelect"></select>
+            </label>
+            <label class="field-select">
+              <span class="option-label">Format vidéo</span>
+              <select id="containerSelect">
+                <option value="mp4">MP4</option>
+                <option value="webm">WEBM</option>
+                <option value="mkv">MKV</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="option-row" id="audioOptions" hidden>
+            <label class="field-select">
+              <span class="option-label">Format audio</span>
+              <select id="audioFormatSelect">
+                <option value="mp3">MP3</option>
+                <option value="m4a">M4A</option>
+                <option value="opus">OPUS</option>
+                <option value="wav">WAV</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <button type="button" class="download" id="downloadBtn">Télécharger</button>
+      </div>
+    </section>
+
+    <section class="progress-card" id="progressCard" hidden>
+      <div class="progress-header">
+        <div class="progress-info">
+          <span class="progress-badge" id="progressBadge">Extraction</span>
+          <h3 class="progress-title" id="progressTitle">Préparation…</h3>
+        </div>
+        <span class="progress-percentage" id="progressPercent">0%</span>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+
+      <div class="progress-details">
+        <span class="progress-sub" id="progressSub">Initialisation du téléchargement…</span>
+        <span class="progress-speed" id="progressSpeed"></span>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>&copy; Daril Arale, 2026</p>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
