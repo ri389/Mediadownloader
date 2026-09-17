@@ -476,8 +476,9 @@ function getCommonYtDlpArgs() {
   const args = [
     "--no-playlist",
     "--no-warnings",
+    "-4",
     "--extractor-args",
-    "youtube:player_client=ios,android,mweb",
+    "youtube:player_client=mweb,android,tv_embedded,web_creator",
   ];
 
   const cookiesPath =
