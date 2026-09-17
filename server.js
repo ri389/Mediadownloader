@@ -512,8 +512,11 @@ function getCommonYtDlpArgs() {
     "--no-playlist",
     "--no-warnings",
     "-4",
+    // ios & tv_embedded bypass YouTube datacenter IP blocking (web/mweb clients trigger bot detection on servers)
     "--extractor-args",
-    "youtube:player_client=mweb,android,tv_embedded,web_creator",
+    "youtube:player_client=ios,tv_embedded,android",
+    "--add-headers",
+    "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
   ];
 
   if (COOKIES_FILE_PATH) {
