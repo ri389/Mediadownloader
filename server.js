@@ -1053,17 +1053,26 @@ process.once("exit", () => {
   } catch {}
 });
 
-function getCommonYtDlpArgs() {
-  const args = [
-    "--no-playlist",
-    "--no-warnings",
-    "-4",
-    // ios & tv_embedded bypass YouTube datacenter IP blocking (web/mweb clients trigger bot detection on servers)
-    "--extractor-args",
-    "youtube:player_client=ios,tv_embedded,android",
-    "--add-headers",
-    "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-  ];
+function getCommonYtDlpArgs(target) {
+  const args = ["--no-playlist", "--no-warnings", "-4"];
+  let hostname = "";
+  try {
+    hostname = new URL(target).hostname.toLowerCase();
+  } catch {}
+
+  if (
+    hostname === "youtu.be" ||
+    hostname === "youtube.com" ||
+    hostname.endsWith(".youtube.com")
+  ) {
+    // These YouTube clients and their matching user agent avoid datacenter bot detection.
+    args.push(
+      "--extractor-args",
+      "youtube:player_client=ios,tv_embedded,android",
+      "--add-headers",
+      "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    );
+  }
 
   if (COOKIES_FILE_PATH) {
     args.push("--cookies", COOKIES_FILE_PATH);
@@ -1077,7 +1086,7 @@ async function inspectViaExtractor(target) {
   await assertSafeUrl(cleanTarget);
 
   const { stdout } = await runYtDlp([
-    ...getCommonYtDlpArgs(),
+    ...getCommonYtDlpArgs(cleanTarget),
     "--dump-single-json",
     "--skip-download",
     cleanTarget,
@@ -1131,7 +1140,7 @@ async function downloadViaExtractorToTempProgress(jobId, target, options, sugges
   const opts = options || { mode: "video", height: 0, container: "mp4", audioFormat: "mp3" };
 
   const args = [
-    ...getCommonYtDlpArgs(),
+    ...getCommonYtDlpArgs(cleanTarget),
     "--max-filesize",
     String(MAX_BYTES),
     "-o",
