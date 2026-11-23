@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0e1412" />
+  <title>Connexion — Media Downloader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="glow glow-a" aria-hidden="true"></div>
+  <div class="glow glow-b" aria-hidden="true"></div>
+
+  <main class="shell auth-shell">
+    <a class="legal-back" href="privacy.html">Confidentialité</a>
+    <header class="auth-header">
+      <p class="logo">Media Downloader</p>
+      <h1>Ton espace média.</h1>
+      <p class="lede">Connecte-toi pour retrouver ton espace et télécharger tes médias.</p>
+    </header>
+
+    <section class="auth-card" aria-label="Connexion ou inscription">
+      <div class="segmented auth-tabs" role="tablist" aria-label="Accès au compte">
+        <button class="seg active" id="loginTab" type="button" role="tab" aria-selected="true" aria-controls="loginForm">Connexion</button>
+        <button class="seg" id="registerTab" type="button" role="tab" aria-selected="false" aria-controls="registerForm">Inscription</button>
+      </div>
+
+      <p class="status auth-status" id="authStatus" role="status" hidden></p>
+
+      <form class="auth-form" id="loginForm" autocomplete="on">
+        <label class="auth-field">
+          <span>Nom d’utilisateur</span>
+          <input id="loginUsername" name="username" type="text" autocomplete="username" minlength="3" maxlength="32" required />
+        </label>
+        <label class="auth-field">
+          <span>Mot de passe</span>
+          <input id="loginPassword" name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <button class="auth-submit" type="submit">Se connecter <span aria-hidden="true">→</span></button>
+      </form>
+
+      <form class="auth-form" id="registerForm" autocomplete="on" hidden>
+        <label class="auth-field">
+          <span>Nom affiché</span>
+          <input id="registerDisplayName" name="displayName" type="text" autocomplete="name" maxlength="48" required />
+        </label>
+        <label class="auth-field">
+          <span>Nom d’utilisateur</span>
+          <input id="registerUsername" name="username" type="text" autocomplete="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}" required />
+          <small>3 à 32 caractères : lettres, chiffres, point, tiret ou tiret bas.</small>
+        </label>
+        <label class="auth-field">
+          <span>Mot de passe</span>
+          <input id="registerPassword" name="password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required />
+          <small>Au moins 10 caractères.</small>
+        </label>
+        <label class="auth-field invite-field" id="inviteField" hidden>
+          <span>Code d’invitation</span>
+          <input id="inviteCode" name="inviteCode" type="password" autocomplete="off" />
+        </label>
+        <button class="auth-submit" type="submit">Créer mon compte <span aria-hidden="true">→</span></button>
+      </form>
+    </section>
+
+    <footer class="footer auth-footer">
+      <div class="footer-row">
+        <p>&copy; Daril Arale, 2026</p>
+        <a class="footer-link" href="privacy.html">Politique de confidentialité</a>
+      </div>
+    </footer>
+  </main>
+
+  <script src="account.js"></script>
+</body>
+</html>

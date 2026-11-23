@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: media_downloader
+      POSTGRES_USER: media_downloader
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Définis POSTGRES_PASSWORD dans .env}"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - legacy-users:/app/data
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3847
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: media_downloader
+      PGUSER: media_downloader
+      PGPASSWORD: "${POSTGRES_PASSWORD:?Définis POSTGRES_PASSWORD dans .env}"
+      APP_PASSWORD: "${APP_PASSWORD:?Définis APP_PASSWORD dans .env}"
+    ports:
+      - "127.0.0.1:3847:3847"
+
+volumes:
+  postgres-data:
+  legacy-users:
+    name: media-downloader-data

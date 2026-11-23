@@ -15,11 +15,12 @@ RUN pip3 install --break-system-packages --no-cache-dir -U yt-dlp
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --production
+RUN npm ci --omit=dev
 
 COPY . .
 
 ENV PORT=3847
+ENV HOST=0.0.0.0
 ENV GRAB_PYTHON=python3
 
 EXPOSE 3847

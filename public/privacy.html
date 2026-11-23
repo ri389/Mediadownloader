@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0e1412" />
+  <title>Confidentialité — Media Downloader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="glow glow-a" aria-hidden="true"></div>
+  <div class="glow glow-b" aria-hidden="true"></div>
+
+  <main class="shell legal-shell">
+    <a class="legal-back" href="/" aria-label="Retour à Media Downloader">
+      <span aria-hidden="true">←</span> Retour à l’application
+    </a>
+
+    <header class="legal-header">
+      <p class="legal-eyebrow">Transparence & données</p>
+      <h1 class="legal-title">Politique de confidentialité</h1>
+      <p class="legal-updated">Mise à jour le 23 novembre 2026</p>
+    </header>
+
+    <aside class="legal-note">
+      Cette page décrit le fonctionnement de Media Downloader dans le dépôt. Avant d’ouvrir une instance au public, son exploitant doit compléter les coordonnées de contact et vérifier les journaux ainsi que les durées propres à son hébergeur.
+    </aside>
+
+    <div class="legal-content">
+      <section class="legal-section">
+        <h2>Qui exploite cette instance ?</h2>
+        <p>Cette application est publiée sous le nom de Daril Arale. Adresse de contact pour les questions relatives aux données : <strong>à renseigner par l’exploitant de cette instance</strong>.</p>
+        <p>Chaque copie de l’application peut être installée et administrée séparément. L’exploitant du serveur que tu utilises est responsable de ses réglages, de son hébergement et de ses pratiques de conservation.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Données utilisées</h2>
+        <ul>
+          <li><strong>Les informations du compte</strong> : nom d’utilisateur, nom affiché, date de création et empreinte du mot de passe hachée avec scrypt. Le mot de passe en clair n’est pas conservé.</li>
+          <li><strong>Le lien soumis</strong> et les options choisies (résolution, conteneur ou format audio), pour analyser le média et répondre au téléchargement demandé.</li>
+          <li><strong>Les informations du média</strong> retournées par le site source, comme son titre, sa durée, sa miniature, sa taille ou ses formats disponibles.</li>
+          <li><strong>Les données techniques de connexion</strong> nécessaires aux échanges réseau. Le serveur et l’hébergeur peuvent traiter l’adresse IP, les en-têtes HTTP et l’heure des requêtes.</li>
+          <li><strong>Les cookies de plateforme configurés par l’exploitant</strong>, s’il en fournit à yt-dlp. Ils sont utilisés côté serveur pour accéder au site source; l’application ne demande pas les cookies du navigateur du visiteur.</li>
+        </ul>
+        <p>L’application ne conserve pas d’historique de liens et n’intègre pas de mesure d’audience ni de publicité.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Pourquoi et sur quelle base ?</h2>
+        <p>Le lien et les options servent uniquement à analyser le média demandé, préparer le fichier et le transmettre. Les informations techniques servent au fonctionnement et à la sécurité de l’instance.</p>
+        <p>La base juridique applicable dépend de la personne qui exploite l’instance et de son contexte d’utilisation. L’exploitant doit la préciser si la législation applicable, notamment le RGPD, l’exige.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Destinataires et services tiers</h2>
+        <ul>
+          <li><strong>Le serveur de l’application et sa base PostgreSQL</strong> reçoivent le lien saisi pour traiter la demande et conservent les informations du compte.</li>
+          <li><strong>Le site source et ses CDN</strong> sont contactés par le serveur pour récupérer les métadonnées ou le média. Ils peuvent recevoir l’adresse IP du serveur et des informations de requête. Leurs propres règles de confidentialité s’appliquent.</li>
+          <li><strong>Google Fonts</strong> fournit les polices de caractères de l’interface. Le navigateur contacte les serveurs de Google et peut transmettre des informations techniques, notamment son adresse IP, son type et l’URL de référence, selon la politique de Google. Consulte la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">politique de confidentialité de Google</a>.</li>
+          <li><strong>L’hébergeur ou le proxy inverse</strong>, si l’exploitant en configure un, peut conserver ses propres journaux techniques. Ces journaux ne sont pas contrôlés par le code de l’application.</li>
+        </ul>
+      </section>
+
+      <section class="legal-section">
+        <h2>Conservation</h2>
+        <ul>
+          <li>Les comptes sont conservés dans la base PostgreSQL de l’instance jusqu’à leur suppression par l’exploitant. Les mots de passe sont enregistrés sous forme hachée.</li>
+          <li>Lors de la migration depuis une ancienne version, le fichier local <code>data/users.json.migrated</code> peut conserver une copie des comptes importés jusqu’à sa suppression par l’exploitant.</li>
+          <li>Les sessions sont conservées en mémoire pour une durée maximale de sept jours et sont effacées au redémarrage du serveur.</li>
+          <li>Les informations de progression d’un téléchargement sont conservées en mémoire et supprimées après le transfert du fichier ou à l’expiration du travail, au plus tard après 15 minutes.</li>
+          <li>Les médias téléchargés sont stockés temporairement sur le serveur, puis supprimés après leur transfert. Les fichiers temporaires résiduels de plus d’une heure sont nettoyés périodiquement.</li>
+          <li>Si l’exploitant fournit des cookies via <code>YTDLP_COOKIES_B64</code>, l’application crée un fichier temporaire propre au processus et le supprime lors d’un arrêt normal. Un arrêt brutal peut laisser ce fichier dans le dossier temporaire du système. Un fichier fourni par chemin ou placé sous <code>cookies.txt</code> reste sous la responsabilité de l’exploitant.</li>
+        </ul>
+        <p>L’application ne tient pas de journal permanent des liens soumis. L’hébergeur ou le proxy choisi par l’exploitant peut toutefois appliquer ses propres durées de conservation.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Cookies et authentification</h2>
+        <p>L’application ne dépose pas de cookie de suivi. Après connexion, elle utilise un cookie de session HTTP-only, avec l’attribut SameSite, valable au maximum sept jours. Les sessions sont conservées en mémoire et prennent fin au redémarrage du serveur. Si <code>APP_PASSWORD</code> est configuré, il sert de code d’invitation à l’inscription, pas de mot de passe partagé de connexion. Pour un accès réseau, l’exploitant doit protéger la connexion avec HTTPS.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Choix et droits</h2>
+        <p>Tu peux éviter de soumettre un lien. Sans lien, l’analyse et le téléchargement ne peuvent pas fonctionner. Les demandes d’accès, de rectification ou d’effacement, ainsi que les autres droits prévus par la loi applicable, peuvent être adressés à l’exploitant au moyen de ses coordonnées de contact.</p>
+        <p>Pour les personnes relevant du RGPD, la <a href="https://www.cnil.fr/fr/les-droits-des-personnes-sur-leurs-donnees" target="_blank" rel="noopener noreferrer">CNIL présente les droits relatifs aux données personnelles</a>. Le contact et l’autorité compétente dépendent de l’instance et du lieu où elle est exploitée.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Modifications</h2>
+        <p>Cette politique doit être mise à jour si les fonctionnalités, les fournisseurs, les journaux ou les durées de conservation changent. La date en haut de page indique sa dernière révision.</p>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-row">
+        <p>&copy; Daril Arale, 2026</p>
+        <a class="footer-link" href="/">Accueil</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>

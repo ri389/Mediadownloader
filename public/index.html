@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Grab — Media Downloader</title>
+  <title>Media Downloader</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
@@ -14,6 +14,12 @@
   <div class="glow glow-b" aria-hidden="true"></div>
 
   <main class="shell">
+    <nav class="app-nav" aria-label="Compte">
+      <a class="account-link" href="/profile.html">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6.5" r="3" /><path d="M3.5 17c.5-3.1 2.8-4.8 6.5-4.8s6 1.7 6.5 4.8" /></svg>
+        Mon profil
+      </a>
+    </nav>
     <header class="brand">
       <p class="logo">Media Downloader</p>
       <h1>Colle un lien. Récupère le fichier.</h1>
@@ -50,35 +56,38 @@
             <span class="option-label">Type</span>
             <div class="segmented" role="group" aria-label="Type de téléchargement">
               <button type="button" class="seg" data-mode="video" id="modeVideo">Vidéo</button>
-              <button type="button" class="seg" data-mode="audio" id="modeAudio">Audio seul</button>
+              <button type="button" class="seg" data-mode="audio" id="modeAudio">Audio</button>
             </div>
           </div>
 
           <div class="option-row" id="videoOptions">
-            <label class="field-select">
-              <span class="option-label">Résolution</span>
-              <select id="resolutionSelect"></select>
-            </label>
-            <label class="field-select">
-              <span class="option-label">Format vidéo</span>
-              <select id="containerSelect">
-                <option value="mp4">MP4</option>
-                <option value="webm">WEBM</option>
-                <option value="mkv">MKV</option>
-              </select>
-            </label>
+            <div class="field-select custom-select" id="resolutionSelect">
+              <span class="option-label" id="resolutionLabel">Résolution</span>
+              <button class="select-trigger" id="resolutionTrigger" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="resolutionOptions" aria-labelledby="resolutionLabel resolutionValue">
+                <span class="select-value" id="resolutionValue">Meilleure disponible</span>
+                <svg class="select-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 6 4.5 4 4.5-4" /></svg>
+              </button>
+              <div class="select-menu" id="resolutionOptions" role="listbox" aria-labelledby="resolutionLabel" hidden></div>
+            </div>
+            <div class="field-select custom-select" id="containerSelect">
+              <span class="option-label" id="containerLabel">Format vidéo</span>
+              <button class="select-trigger" id="containerTrigger" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="containerOptions" aria-labelledby="containerLabel containerValue">
+                <span class="select-value" id="containerValue">MP4</span>
+                <svg class="select-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 6 4.5 4 4.5-4" /></svg>
+              </button>
+              <div class="select-menu" id="containerOptions" role="listbox" aria-labelledby="containerLabel" hidden></div>
+            </div>
           </div>
 
           <div class="option-row" id="audioOptions" hidden>
-            <label class="field-select">
-              <span class="option-label">Format audio</span>
-              <select id="audioFormatSelect">
-                <option value="mp3">MP3</option>
-                <option value="m4a">M4A</option>
-                <option value="opus">OPUS</option>
-                <option value="wav">WAV</option>
-              </select>
-            </label>
+            <div class="field-select custom-select" id="audioFormatSelect">
+              <span class="option-label" id="audioFormatLabel">Format audio</span>
+              <button class="select-trigger" id="audioFormatTrigger" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="audioFormatOptions" aria-labelledby="audioFormatLabel audioFormatValue">
+                <span class="select-value" id="audioFormatValue">MP3</span>
+                <svg class="select-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 6 4.5 4 4.5-4" /></svg>
+              </button>
+              <div class="select-menu" id="audioFormatOptions" role="listbox" aria-labelledby="audioFormatLabel" hidden></div>
+            </div>
           </div>
         </div>
 
@@ -106,7 +115,10 @@
     </section>
 
     <footer class="footer">
-      <p>&copy; Daril Arale, 2026</p>
+      <div class="footer-row">
+        <p>&copy; Daril Arale, 2026</p>
+        <a class="footer-link" href="privacy.html">Confidentialité</a>
+      </div>
     </footer>
   </main>
 

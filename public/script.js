@@ -12,12 +12,209 @@ const modeVideoBtn = document.getElementById("modeVideo");
 const modeAudioBtn = document.getElementById("modeAudio");
 const videoOptions = document.getElementById("videoOptions");
 const audioOptions = document.getElementById("audioOptions");
-const resolutionSelect = document.getElementById("resolutionSelect");
-const containerSelect = document.getElementById("containerSelect");
-const audioFormatSelect = document.getElementById("audioFormatSelect");
+const resolutionSelectRoot = document.getElementById("resolutionSelect");
+const containerSelectRoot = document.getElementById("containerSelect");
+const audioFormatSelectRoot = document.getElementById("audioFormatSelect");
 
 let currentMedia = null;
 let selectedMode = "video";
+
+class CustomSelect {
+  constructor(root) {
+    this.root = root;
+    this.trigger = root.querySelector(".select-trigger");
+    this.valueNode = root.querySelector(".select-value");
+    this.menu = root.querySelector(".select-menu");
+    this.options = [];
+    this.currentValue = "";
+    this.activeIndex = -1;
+    this.typeahead = "";
+    this.typeaheadTimer = null;
+
+    this.trigger.addEventListener("click", () => {
+      if (this.isOpen) this.close();
+      else this.open();
+    });
+    this.trigger.addEventListener("keydown", (event) => this.handleKeydown(event));
+    this.menu.addEventListener("pointermove", (event) => {
+      const option = event.target.closest(".select-option");
+      if (option) this.setActive(Number(option.dataset.index));
+    });
+    this.menu.addEventListener("click", (event) => {
+      const option = event.target.closest(".select-option");
+      if (!option) return;
+      this.value = this.options[Number(option.dataset.index)]?.value;
+      this.close();
+      this.trigger.focus({ preventScroll: true });
+    });
+    document.addEventListener("pointerdown", (event) => {
+      if (!this.root.contains(event.target)) this.close();
+    });
+  }
+
+  get isOpen() {
+    return !this.menu.hidden;
+  }
+
+  get value() {
+    return this.currentValue;
+  }
+
+  set value(nextValue) {
+    const index = this.options.findIndex((option) => option.value === String(nextValue));
+    if (index < 0) return;
+    const next = this.options[index].value;
+    const changed = next !== this.currentValue;
+    this.currentValue = next;
+    this.activeIndex = index;
+    this.render();
+    if (changed) this.root.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  get selectedOptions() {
+    const selected = this.options.find((option) => option.value === this.currentValue);
+    return selected ? [{ textContent: selected.label }] : [];
+  }
+
+  addEventListener(type, listener, options) {
+    this.root.addEventListener(type, listener, options);
+  }
+
+  setOptions(options, preferredValue) {
+    this.options = options.map((option) => ({
+      value: String(option.value),
+      label: String(option.label),
+    }));
+
+    const fragment = document.createDocumentFragment();
+    this.options.forEach((option, index) => {
+      const row = document.createElement("div");
+      row.className = "select-option";
+      row.id = `${this.root.id}-option-${index}`;
+      row.dataset.index = String(index);
+      row.setAttribute("role", "option");
+      row.setAttribute("aria-selected", "false");
+      row.textContent = option.label;
+      fragment.appendChild(row);
+    });
+    this.menu.replaceChildren(fragment);
+
+    const preferredIndex = this.options.findIndex((option) => option.value === String(preferredValue));
+    const currentIndex = this.options.findIndex((option) => option.value === this.currentValue);
+    const selectedIndex = preferredIndex >= 0 ? preferredIndex : currentIndex >= 0 ? currentIndex : 0;
+    this.currentValue = this.options[selectedIndex]?.value || "";
+    this.activeIndex = selectedIndex;
+    this.render();
+  }
+
+  render() {
+    const selectedIndex = this.options.findIndex((option) => option.value === this.currentValue);
+    this.valueNode.textContent = this.options[selectedIndex]?.label || "Choisir une option";
+    this.options.forEach((option, index) => {
+      const row = this.menu.children[index];
+      const selected = index === selectedIndex;
+      row.classList.toggle("is-selected", selected);
+      row.setAttribute("aria-selected", String(selected));
+    });
+    if (this.isOpen && this.activeIndex >= 0) this.setActive(this.activeIndex, false);
+  }
+
+  open() {
+    if (!this.options.length) return;
+    this.menu.hidden = false;
+    this.root.classList.add("is-open");
+    this.trigger.setAttribute("aria-expanded", "true");
+    const selectedIndex = this.options.findIndex((option) => option.value === this.currentValue);
+    this.setActive(selectedIndex >= 0 ? selectedIndex : 0);
+  }
+
+  close() {
+    if (!this.isOpen) return;
+    this.menu.hidden = true;
+    this.root.classList.remove("is-open");
+    this.trigger.setAttribute("aria-expanded", "false");
+    this.trigger.removeAttribute("aria-activedescendant");
+    this.menu.querySelectorAll(".is-active").forEach((option) => option.classList.remove("is-active"));
+  }
+
+  setActive(index, scroll = true) {
+    if (index < 0 || index >= this.options.length) return;
+    this.activeIndex = index;
+    this.menu.querySelectorAll(".select-option").forEach((option, optionIndex) => {
+      option.classList.toggle("is-active", optionIndex === index);
+    });
+    const activeOption = this.menu.children[index];
+    this.trigger.setAttribute("aria-activedescendant", activeOption.id);
+    if (scroll) activeOption.scrollIntoView({ block: "nearest" });
+  }
+
+  chooseActive() {
+    if (this.activeIndex < 0) return;
+    this.value = this.options[this.activeIndex].value;
+    this.close();
+  }
+
+  handleKeydown(event) {
+    if (event.key === "Tab") {
+      this.close();
+      return;
+    }
+
+    if (["ArrowDown", "ArrowUp", "Home", "End", "Enter", " "].includes(event.key)) {
+      event.preventDefault();
+    } else if (event.key === "Escape") {
+      if (this.isOpen) {
+        event.preventDefault();
+        this.close();
+      }
+      return;
+    } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      this.handleTypeahead(event.key);
+      return;
+    } else {
+      return;
+    }
+
+    if (!this.options.length) return;
+    if (event.key === "ArrowDown") {
+      if (!this.isOpen) this.open();
+      else this.setActive((this.activeIndex + 1) % this.options.length);
+    } else if (event.key === "ArrowUp") {
+      if (!this.isOpen) {
+        this.open();
+        this.setActive((this.activeIndex - 1 + this.options.length) % this.options.length);
+      } else {
+        this.setActive((this.activeIndex - 1 + this.options.length) % this.options.length);
+      }
+    } else if (event.key === "Home" || event.key === "End") {
+      if (!this.isOpen) this.open();
+      this.setActive(event.key === "Home" ? 0 : this.options.length - 1);
+    } else if (event.key === "Enter" || event.key === " ") {
+      if (this.isOpen) this.chooseActive();
+      else this.open();
+    }
+  }
+
+  handleTypeahead(character) {
+    this.typeahead += character.toLocaleLowerCase();
+    clearTimeout(this.typeaheadTimer);
+    this.typeaheadTimer = setTimeout(() => { this.typeahead = ""; }, 700);
+
+    const start = Math.max(0, this.activeIndex + 1);
+    for (let offset = 0; offset < this.options.length; offset += 1) {
+      const index = (start + offset) % this.options.length;
+      if (this.options[index].label.toLocaleLowerCase().startsWith(this.typeahead)) {
+        if (!this.isOpen) this.open();
+        this.setActive(index);
+        return;
+      }
+    }
+  }
+}
+
+const resolutionSelect = new CustomSelect(resolutionSelectRoot);
+const containerSelect = new CustomSelect(containerSelectRoot);
+const audioFormatSelect = new CustomSelect(audioFormatSelectRoot);
 
 function formatSize(bytes) {
   if (!bytes || bytes <= 0) return "taille inconnue";
@@ -40,6 +237,19 @@ function setStatus(message, ok = false) {
   statusEl.hidden = false;
   statusEl.textContent = message;
   statusEl.classList.toggle("ok", ok);
+}
+
+async function readApiJson(response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    if (response.status === 401) {
+      throw new Error("Authentification requise. Recharge la page et saisis le mot de passe de l’application.");
+    }
+    throw new Error(
+      "L’API n’a pas répondu en JSON. Lance `npm start`, puis ouvre http://localhost:3847. Live Server (port 5500) ne sert pas l’API."
+    );
+  }
+  return response.json();
 }
 
 function clearResult() {
@@ -69,6 +279,9 @@ function buildDetails(data) {
 }
 
 function setMode(mode) {
+  resolutionSelect.close();
+  containerSelect.close();
+  audioFormatSelect.close();
   selectedMode = mode;
   modeVideoBtn.classList.toggle("active", mode === "video");
   modeAudioBtn.classList.toggle("active", mode === "audio");
@@ -102,37 +315,28 @@ function setupOptions(data) {
 
   optionsPanel.hidden = false;
 
-  resolutionSelect.innerHTML = "";
   const resolutions = choices.resolutions?.length
     ? choices.resolutions
     : [{ height: 0, label: "Meilleure disponible" }];
-  for (const r of resolutions) {
-    const opt = document.createElement("option");
-    opt.value = String(r.height);
-    opt.textContent = r.label;
-    resolutionSelect.appendChild(opt);
-  }
-
-  containerSelect.innerHTML = "";
-  for (const c of choices.videoContainers || ["mp4", "webm", "mkv"]) {
-    const opt = document.createElement("option");
-    opt.value = c;
-    opt.textContent = c.toUpperCase();
-    containerSelect.appendChild(opt);
-  }
-
-  audioFormatSelect.innerHTML = "";
-  for (const a of choices.audioFormats || ["mp3", "m4a", "opus", "wav"]) {
-    const opt = document.createElement("option");
-    opt.value = a;
-    opt.textContent = a.toUpperCase();
-    audioFormatSelect.appendChild(opt);
-  }
-
   const defaults = choices.defaults || {};
-  if (defaults.height != null) resolutionSelect.value = String(defaults.height);
-  if (defaults.container) containerSelect.value = defaults.container;
-  if (defaults.audioFormat) audioFormatSelect.value = defaults.audioFormat;
+  resolutionSelect.setOptions(
+    resolutions.map((option) => ({ value: option.height, label: option.label })),
+    defaults.height == null ? "0" : String(defaults.height)
+  );
+  containerSelect.setOptions(
+    (choices.videoContainers || ["mp4", "webm", "mkv"]).map((container) => ({
+      value: container,
+      label: container.toUpperCase(),
+    })),
+    defaults.container || "mp4"
+  );
+  audioFormatSelect.setOptions(
+    (choices.audioFormats || ["mp3", "m4a", "opus", "wav"]).map((format) => ({
+      value: format,
+      label: format.toUpperCase(),
+    })),
+    defaults.audioFormat || "mp3"
+  );
 
   modeVideoBtn.hidden = !choices.canVideo;
   modeAudioBtn.hidden = !choices.canAudio;
@@ -161,7 +365,7 @@ form.addEventListener("submit", async (event) => {
 
   try {
     const res = await fetch(`/api/inspect?url=${encodeURIComponent(url)}`);
-    const data = await res.json();
+    const data = await readApiJson(res);
 
     if (!res.ok || !data.ok) {
       throw new Error(data.error || "Impossible d'analyser ce lien.");
@@ -272,18 +476,19 @@ function buildDownloadUrl() {
   return `/api/extract/download?${params.toString()}`;
 }
 
-function suggestedFilename() {
-  const base = (currentMedia.title || currentMedia.filename || "media").replace(
-    /\.[^.]+$/,
-    ""
-  );
-  if (currentMedia.source !== "extractor" || currentMedia.type === "image") {
-    return currentMedia.filename || "media.bin";
-  }
-  if (selectedMode === "audio") {
-    return `${base}.${audioFormatSelect.value}`;
-  }
-  return `${base}.${containerSelect.value}`;
+function startBrowserDownload(url) {
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "";
+  link.hidden = true;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+function showDownloadStarted() {
+  hideProgressCard(0);
+  setStatus("Téléchargement lancé dans le navigateur.", true);
 }
 
 downloadBtn.addEventListener("click", async () => {
@@ -313,22 +518,22 @@ downloadBtn.addEventListener("click", async () => {
 
     try {
       const startRes = await fetch(`/api/job/start?${params.toString()}`);
-      const startData = await startRes.json();
+      const startData = await readApiJson(startRes);
       if (!startRes.ok || !startData.ok || !startData.jobId) {
         throw new Error(startData.error || "Impossible de démarrer le téléchargement.");
       }
 
       const jobId = startData.jobId;
 
-      const finalJob = await new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         const timer = setInterval(async () => {
           try {
             const statusRes = await fetch(`/api/job/status?id=${jobId}`);
+            const data = await readApiJson(statusRes);
             if (!statusRes.ok) {
               clearInterval(timer);
-              return reject(new Error("Erreur de suivi du téléchargement."));
+              return reject(new Error(data.error || "Erreur de suivi du téléchargement."));
             }
-            const data = await statusRes.json();
             if (data.status === "error") {
               clearInterval(timer);
               return reject(new Error(data.error || "Erreur pendant l'extraction."));
@@ -351,47 +556,9 @@ downloadBtn.addEventListener("click", async () => {
         }, 300);
       });
 
-      showProgressCard("Transfert", "Envoi vers votre appareil…", 0, "Préparation du fichier…");
       if (progressBadge) progressBadge.classList.add("ready");
-
-      const fileRes = await fetch(`/api/job/download?id=${jobId}`);
-      if (!fileRes.ok) throw new Error("Erreur de récupération du fichier final.");
-
-      const contentLength = Number(fileRes.headers.get("Content-Length") || finalJob.size || 0);
-      const reader = fileRes.body.getReader();
-      const chunks = [];
-      let receivedBytes = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        receivedBytes += value.length;
-
-        if (contentLength > 0) {
-          const transferPct = Math.min(100, Math.round((receivedBytes / contentLength) * 100));
-          showProgressCard(
-            "Transfert",
-            "Transfert vers votre appareil…",
-            transferPct,
-            `${formatSize(receivedBytes)} sur ${formatSize(contentLength)}`
-          );
-        }
-      }
-
-      const blob = new Blob(chunks);
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download = finalJob.filename || suggestedFilename();
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
-
-      showProgressCard("Terminé", "Téléchargement terminé !", 100, "Fichier enregistré avec succès ! 🎉");
-      setStatus("Téléchargement terminé avec succès !", true);
-      hideProgressCard(3000);
+      startBrowserDownload(`/api/job/download?id=${encodeURIComponent(jobId)}`);
+      showDownloadStarted();
     } catch (err) {
       hideProgressCard(0);
       setStatus(err.message || "Erreur de téléchargement.");
@@ -404,57 +571,9 @@ downloadBtn.addEventListener("click", async () => {
     const downloadUrl = buildDownloadUrl();
     if (!downloadUrl) return;
 
-    showProgressCard("Téléchargement", "Téléchargement direct…", 0, "Initialisation…");
-
-    try {
-      const res = await fetch(downloadUrl);
-      if (!res.ok) {
-        let message = "Échec du téléchargement.";
-        try {
-          const err = await res.json();
-          if (err.error) message = err.error;
-        } catch {}
-        throw new Error(message);
-      }
-
-      const contentLength = Number(res.headers.get("Content-Length") || 0);
-      const reader = res.body.getReader();
-      const chunks = [];
-      let receivedBytes = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        receivedBytes += value.length;
-
-        if (contentLength > 0) {
-          const pct = Math.min(100, Math.round((receivedBytes / contentLength) * 100));
-          showProgressCard("Téléchargement", "Téléchargement du média…", pct, `${formatSize(receivedBytes)} / ${formatSize(contentLength)}`);
-        } else {
-          showProgressCard("Téléchargement", "Reconstitution du fichier…", 50, `${formatSize(receivedBytes)} reçus`);
-        }
-      }
-
-      const blob = new Blob(chunks);
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download = suggestedFilename();
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
-
-      showProgressCard("Terminé", "Téléchargement terminé !", 100, "Fichier enregistré avec succès ! 🎉");
-      setStatus("Téléchargement terminé.", true);
-      hideProgressCard(3000);
-    } catch (err) {
-      hideProgressCard(0);
-      setStatus(err.message || "Erreur de téléchargement.");
-    } finally {
-      downloadBtn.disabled = false;
-      updateDownloadLabel();
-    }
+    startBrowserDownload(downloadUrl);
+    showDownloadStarted();
+    downloadBtn.disabled = false;
+    updateDownloadLabel();
   }
 });

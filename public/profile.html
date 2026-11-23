@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0e1412" />
+  <title>Mon profil — Media Downloader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="glow glow-a" aria-hidden="true"></div>
+  <div class="glow glow-b" aria-hidden="true"></div>
+
+  <main class="shell profile-shell">
+    <nav class="profile-topbar" aria-label="Navigation du compte">
+      <a class="legal-back" href="/">← Retour à l’application</a>
+      <button class="secondary-button" id="logoutButton" type="button">Se déconnecter</button>
+    </nav>
+
+    <header class="legal-header profile-header">
+      <p class="legal-eyebrow">Espace personnel</p>
+      <h1 class="legal-title">Mon profil</h1>
+      <p class="legal-updated">Gère les informations de ton compte.</p>
+    </header>
+
+    <section class="profile-identity" aria-label="Résumé du compte">
+      <div class="profile-avatar" id="profileAvatar" aria-hidden="true">M</div>
+      <div>
+        <h2 id="profileDisplayName">Chargement…</h2>
+        <p id="profileUsername"></p>
+        <p class="profile-created" id="profileCreated"></p>
+      </div>
+    </section>
+
+    <p class="status profile-status" id="profileStatus" role="status" hidden></p>
+
+    <div class="profile-grid">
+      <section class="profile-card">
+        <p class="legal-eyebrow">Informations</p>
+        <h2>Nom affiché</h2>
+        <p class="profile-help">Ce nom apparaît dans ton espace. Ton nom d’utilisateur ne peut pas être modifié.</p>
+        <form id="displayNameForm" class="auth-form">
+          <label class="auth-field">
+            <span>Nom affiché</span>
+            <input id="displayNameInput" name="displayName" type="text" autocomplete="name" maxlength="48" required />
+          </label>
+          <button class="auth-submit" type="submit">Enregistrer le nom <span aria-hidden="true">→</span></button>
+        </form>
+      </section>
+
+      <section class="profile-card">
+        <p class="legal-eyebrow">Sécurité</p>
+        <h2>Changer le mot de passe</h2>
+        <form id="passwordForm" class="auth-form">
+          <label class="auth-field">
+            <span>Mot de passe actuel</span>
+            <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required />
+          </label>
+          <label class="auth-field">
+            <span>Nouveau mot de passe</span>
+            <input id="newPassword" name="newPassword" type="password" autocomplete="new-password" minlength="10" maxlength="128" required />
+            <small>Au moins 10 caractères. Les autres sessions seront déconnectées.</small>
+          </label>
+          <button class="auth-submit" type="submit">Modifier le mot de passe <span aria-hidden="true">→</span></button>
+        </form>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-row">
+        <p>&copy; Daril Arale, 2026</p>
+        <a class="footer-link" href="privacy.html">Confidentialité</a>
+      </div>
+    </footer>
+  </main>
+
+  <script src="profile.js"></script>
+</body>
+</html>
