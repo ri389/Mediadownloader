@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Mettre à jour pip et installer la dernière version de yt-dlp
-RUN pip3 install --break-system-packages --no-cache-dir -U yt-dlp
+RUN pip3 install --break-system-packages --no-cache-dir -U "yt-dlp[default,curl-cffi]"
 
 WORKDIR /app
 
