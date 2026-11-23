@@ -26,71 +26,68 @@
     </header>
 
     <aside class="legal-note">
-      Cette page décrit le fonctionnement de Media Downloader dans le dépôt. Avant d’ouvrir une instance au public, son exploitant doit compléter les coordonnées de contact et vérifier les journaux ainsi que les durées propres à son hébergeur.
+      Cette politique concerne le service public Media Downloader hébergé sur Railway. Elle explique quelles données sont utilisées lorsque tu crées un compte, analyses un lien ou télécharges un média.
     </aside>
 
     <div class="legal-content">
       <section class="legal-section">
-        <h2>Qui exploite cette instance ?</h2>
-        <p>Cette application est publiée sous le nom de Daril Arale. Adresse de contact pour les questions relatives aux données : <strong>à renseigner par l’exploitant de cette instance</strong>.</p>
-        <p>Chaque copie de l’application peut être installée et administrée séparément. L’exploitant du serveur que tu utilises est responsable de ses réglages, de son hébergement et de ses pratiques de conservation.</p>
+        <h2>Responsable du service</h2>
+        <p>Le service est exploité par Daril Arale. Pour toute question ou demande liée à tes données personnelles, écris à <a href="mailto:araledaril@gmail.com">araledaril@gmail.com</a>.</p>
       </section>
 
       <section class="legal-section">
-        <h2>Données utilisées</h2>
+        <h2>Données traitées</h2>
         <ul>
-          <li><strong>Les informations du compte</strong> : nom d’utilisateur, nom affiché, date de création et empreinte du mot de passe hachée avec scrypt. Le mot de passe en clair n’est pas conservé.</li>
-          <li><strong>Le lien soumis</strong> et les options choisies (résolution, conteneur ou format audio), pour analyser le média et répondre au téléchargement demandé.</li>
-          <li><strong>Les informations du média</strong> retournées par le site source, comme son titre, sa durée, sa miniature, sa taille ou ses formats disponibles.</li>
-          <li><strong>Les données techniques de connexion</strong> nécessaires aux échanges réseau. Le serveur et l’hébergeur peuvent traiter l’adresse IP, les en-têtes HTTP et l’heure des requêtes.</li>
-          <li><strong>Les cookies de plateforme configurés par l’exploitant</strong>, s’il en fournit à yt-dlp. Ils sont utilisés côté serveur pour accéder au site source; l’application ne demande pas les cookies du navigateur du visiteur.</li>
+          <li><strong>Compte :</strong> nom d’utilisateur, nom affiché, date de création et empreinte du mot de passe. Le mot de passe est haché avec scrypt ; il n’est pas conservé en clair. L’application ne demande pas d’adresse e-mail à l’inscription.</li>
+          <li><strong>Analyse et téléchargement :</strong> lien fourni, options choisies et informations du média nécessaires à l’aperçu et à la préparation du fichier. L’application ne conserve pas d’historique des liens ni des téléchargements.</li>
+          <li><strong>Sécurité :</strong> l’adresse réseau observée par le serveur est utilisée temporairement pour limiter les tentatives de connexion et d’inscription. Les données techniques d’une requête peuvent également comprendre son heure, son chemin, son statut et le navigateur utilisé.</li>
+          <li><strong>Cookie de session :</strong> après connexion, un identifiant aléatoire permet de garder ta session ouverte. Il ne contient pas ton mot de passe.</li>
         </ul>
-        <p>L’application ne conserve pas d’historique de liens et n’intègre pas de mesure d’audience ni de publicité.</p>
+        <p>Le lien est transmis au serveur pour être traité. Évite de soumettre un lien contenant un mot de passe, un jeton privé ou toute autre information que tu ne souhaites pas voir traitée par le service.</p>
       </section>
 
       <section class="legal-section">
-        <h2>Pourquoi et sur quelle base ?</h2>
-        <p>Le lien et les options servent uniquement à analyser le média demandé, préparer le fichier et le transmettre. Les informations techniques servent au fonctionnement et à la sécurité de l’instance.</p>
-        <p>La base juridique applicable dépend de la personne qui exploite l’instance et de son contexte d’utilisation. L’exploitant doit la préciser si la législation applicable, notamment le RGPD, l’exige.</p>
+        <h2>Utilisation et base juridique</h2>
+        <p>Les données du compte servent à créer et sécuriser ton accès. Le lien et les options servent uniquement à analyser le média demandé et à préparer le téléchargement. Les données techniques servent à protéger le service contre les tentatives abusives et les erreurs.</p>
+        <p>Lorsque le RGPD s’applique, le compte et le traitement demandé reposent sur la fourniture du service que tu sollicites ; les contrôles de sécurité reposent sur l’intérêt légitime à protéger l’application et ses utilisateurs.</p>
       </section>
 
       <section class="legal-section">
-        <h2>Destinataires et services tiers</h2>
+        <h2>Destinataires et hébergement</h2>
         <ul>
-          <li><strong>Le serveur de l’application et sa base PostgreSQL</strong> reçoivent le lien saisi pour traiter la demande et conservent les informations du compte.</li>
-          <li><strong>Le site source et ses CDN</strong> sont contactés par le serveur pour récupérer les métadonnées ou le média. Ils peuvent recevoir l’adresse IP du serveur et des informations de requête. Leurs propres règles de confidentialité s’appliquent.</li>
-          <li><strong>Google Fonts</strong> fournit les polices de caractères de l’interface. Le navigateur contacte les serveurs de Google et peut transmettre des informations techniques, notamment son adresse IP, son type et l’URL de référence, selon la politique de Google. Consulte la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">politique de confidentialité de Google</a>.</li>
-          <li><strong>L’hébergeur ou le proxy inverse</strong>, si l’exploitant en configure un, peut conserver ses propres journaux techniques. Ces journaux ne sont pas contrôlés par le code de l’application.</li>
+          <li><strong>Railway</strong> héberge l’application et sa base PostgreSQL. Le service web est déployé dans la région US East. Railway traite aussi des données techniques et des journaux de plateforme ; ses propres opérations peuvent avoir lieu aux États-Unis. Consulte la <a href="https://railway.com/legal/privacy" target="_blank" rel="noopener noreferrer">politique de confidentialité de Railway</a> et son <a href="https://railway.com/legal/dpa" target="_blank" rel="noopener noreferrer">accord de traitement des données</a>.</li>
+          <li><strong>Le site d’origine du média et ses réseaux de diffusion</strong> sont contactés par le serveur pour récupérer les informations et le fichier. Ils reçoivent la requête depuis l’infrastructure du serveur et appliquent leurs propres politiques.</li>
+          <li><strong>Google Fonts</strong> fournit les polices de l’interface. Le navigateur contacte Google et peut lui transmettre des informations techniques, notamment son adresse IP. Consulte la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">politique de confidentialité de Google</a>.</li>
         </ul>
+        <p>Les requêtes d’analyse et de téléchargement transportent le lien soumis. Railway documente des journaux HTTP contenant notamment le chemin demandé, l’adresse IP, le navigateur, l’heure et le statut. Selon la manière dont le chemin est journalisé, le lien transmis peut donc figurer dans les journaux de la plateforme. Leur durée de conservation dépend du plan Railway ; le plan d’essai indique actuellement sept jours. Voir la <a href="https://docs.railway.com/observability/logs" target="_blank" rel="noopener noreferrer">documentation sur les journaux Railway</a>.</p>
       </section>
 
       <section class="legal-section">
         <h2>Conservation</h2>
         <ul>
-          <li>Les comptes sont conservés dans la base PostgreSQL de l’instance jusqu’à leur suppression par l’exploitant. Les mots de passe sont enregistrés sous forme hachée.</li>
-          <li>Lors de la migration depuis une ancienne version, le fichier local <code>data/users.json.migrated</code> peut conserver une copie des comptes importés jusqu’à sa suppression par l’exploitant.</li>
-          <li>Les sessions sont conservées en mémoire pour une durée maximale de sept jours et sont effacées au redémarrage du serveur.</li>
-          <li>Les informations de progression d’un téléchargement sont conservées en mémoire et supprimées après le transfert du fichier ou à l’expiration du travail, au plus tard après 15 minutes.</li>
-          <li>Les médias téléchargés sont stockés temporairement sur le serveur, puis supprimés après leur transfert. Les fichiers temporaires résiduels de plus d’une heure sont nettoyés périodiquement.</li>
-          <li>Si l’exploitant fournit des cookies via <code>YTDLP_COOKIES_B64</code>, l’application crée un fichier temporaire propre au processus et le supprime lors d’un arrêt normal. Un arrêt brutal peut laisser ce fichier dans le dossier temporaire du système. Un fichier fourni par chemin ou placé sous <code>cookies.txt</code> reste sous la responsabilité de l’exploitant.</li>
+          <li>Les informations du compte restent dans PostgreSQL jusqu’à la suppression du compte.</li>
+          <li>Les liens et options ne sont pas conservés comme historique. Les informations de progression sont gardées en mémoire pendant le traitement ; les travaux expirent au plus tard après quinze minutes.</li>
+          <li>Les fichiers téléchargés sont temporaires sur le serveur et supprimés après leur transfert. Les fichiers résiduels sont nettoyés périodiquement.</li>
+          <li>Les sessions sont gardées en mémoire pour sept jours au maximum et disparaissent au redémarrage du serveur.</li>
+          <li>Les compteurs utilisés pour limiter les tentatives de connexion expirent après quinze minutes.</li>
+          <li>Les journaux conservés par Railway suivent la durée de rétention de son plan et les règles de sa plateforme.</li>
         </ul>
-        <p>L’application ne tient pas de journal permanent des liens soumis. L’hébergeur ou le proxy choisi par l’exploitant peut toutefois appliquer ses propres durées de conservation.</p>
       </section>
 
       <section class="legal-section">
-        <h2>Cookies et authentification</h2>
-        <p>L’application ne dépose pas de cookie de suivi. Après connexion, elle utilise un cookie de session HTTP-only, avec l’attribut SameSite, valable au maximum sept jours. Les sessions sont conservées en mémoire et prennent fin au redémarrage du serveur. Si <code>APP_PASSWORD</code> est configuré, il sert de code d’invitation à l’inscription, pas de mot de passe partagé de connexion. Pour un accès réseau, l’exploitant doit protéger la connexion avec HTTPS.</p>
+        <h2>Cookies</h2>
+        <p>Le site utilise uniquement un cookie fonctionnel de session : il est HTTP-only, utilise SameSite et, sur la connexion HTTPS, l’attribut Secure. Sa durée maximale est de sept jours. Aucun cookie publicitaire ou de mesure d’audience n’est utilisé. L’exploitant peut, si nécessaire, fournir au serveur ses propres cookies de plateforme pour accéder à un site source ; les cookies de ton navigateur ne sont pas transmis à yt-dlp.</p>
       </section>
 
       <section class="legal-section">
-        <h2>Choix et droits</h2>
-        <p>Tu peux éviter de soumettre un lien. Sans lien, l’analyse et le téléchargement ne peuvent pas fonctionner. Les demandes d’accès, de rectification ou d’effacement, ainsi que les autres droits prévus par la loi applicable, peuvent être adressés à l’exploitant au moyen de ses coordonnées de contact.</p>
-        <p>Pour les personnes relevant du RGPD, la <a href="https://www.cnil.fr/fr/les-droits-des-personnes-sur-leurs-donnees" target="_blank" rel="noopener noreferrer">CNIL présente les droits relatifs aux données personnelles</a>. Le contact et l’autorité compétente dépendent de l’instance et du lieu où elle est exploitée.</p>
+        <h2>Tes choix et tes droits</h2>
+        <p>Tu peux modifier ton nom affiché et ton mot de passe depuis ton profil, ou te déconnecter. Pour consulter, rectifier ou supprimer les données de ton compte, ou exercer les autres droits prévus par la loi applicable, écris à <a href="mailto:araledaril@gmail.com">araledaril@gmail.com</a>. La suppression d’un compte est effectuée par l’exploitant après vérification de la demande.</p>
+        <p>Si le RGPD s’applique à ta situation, tu peux aussi déposer une réclamation auprès de l’autorité de contrôle compétente. En France, la <a href="https://www.cnil.fr/fr/les-droits-des-personnes-sur-leurs-donnees" target="_blank" rel="noopener noreferrer">CNIL présente les droits des personnes</a>.</p>
       </section>
 
       <section class="legal-section">
-        <h2>Modifications</h2>
-        <p>Cette politique doit être mise à jour si les fonctionnalités, les fournisseurs, les journaux ou les durées de conservation changent. La date en haut de page indique sa dernière révision.</p>
+        <h2>Évolution de cette politique</h2>
+        <p>Cette page sera actualisée si les données traitées, les fournisseurs ou les durées de conservation changent. La date indiquée en haut correspond à la dernière mise à jour.</p>
       </section>
     </div>
 
