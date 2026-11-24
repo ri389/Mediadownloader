@@ -242,7 +242,7 @@ function setStatus(message, ok = false) {
 function explainExtractionError(message) {
   const error = String(message || "Erreur inattendue.");
   if (/sign in to confirm\s+(?:you['’]re|you are)\s+not a bot/i.test(error)) {
-    return "YouTube bloque l’accès depuis le serveur ou demande une session connectée. Si tu veux, ajoute tes propres cookies YouTube depuis Mon profil ; ils ne seront utilisés que pour tes demandes. Ne les partage jamais dans un message ou un dépôt.";
+    return "YouTube bloque l’accès depuis le serveur. L’exploitant doit configurer des cookies YouTube valides dans la variable YTDLP_COOKIES_B64 de Railway, puis redéployer. Ces cookies sont sensibles : ne les partage pas dans un message ou un dépôt.";
   }
   return error;
 }
