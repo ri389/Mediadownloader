@@ -239,6 +239,14 @@ function setStatus(message, ok = false) {
   statusEl.classList.toggle("ok", ok);
 }
 
+function explainExtractionError(message) {
+  const error = String(message || "Erreur inattendue.");
+  if (/sign in to confirm\s+(?:you['’]re|you are)\s+not a bot/i.test(error)) {
+    return "YouTube bloque l’accès depuis le serveur. L’exploitant doit configurer des cookies YouTube valides dans la variable YTDLP_COOKIES_B64 de Railway, puis redéployer. Ces cookies sont sensibles : ne les partage pas dans un message ou un dépôt.";
+  }
+  return error;
+}
+
 async function readApiJson(response) {
   const contentType = response.headers.get("content-type") || "";
   if (!contentType.toLowerCase().includes("application/json")) {
@@ -410,7 +418,7 @@ form.addEventListener("submit", async (event) => {
 
     resultEl.hidden = false;
   } catch (err) {
-    setStatus(err.message || "Erreur inattendue.");
+    setStatus(explainExtractionError(err.message || "Erreur inattendue."));
   } finally {
     inspectBtn.disabled = false;
   }
@@ -561,7 +569,7 @@ downloadBtn.addEventListener("click", async () => {
       showDownloadStarted();
     } catch (err) {
       hideProgressCard(0);
-      setStatus(err.message || "Erreur de téléchargement.");
+      setStatus(explainExtractionError(err.message || "Erreur de téléchargement."));
     } finally {
       downloadBtn.disabled = false;
       if (progressBadge) progressBadge.classList.remove("ready");

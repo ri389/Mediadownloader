@@ -71,15 +71,24 @@ L’application sera disponible sur <http://localhost:3847>. PostgreSQL est expo
 
 Déploie le `Dockerfile` comme service web conteneurisé avec un processus Node persistant et une base PostgreSQL persistante. Configure `HOST=0.0.0.0`, le `PORT` fourni par l’hébergeur, `DATABASE_URL` (ou les variables `PG*`) et un `APP_PASSWORD` fort. L’endpoint `GET /health` vérifie que l’application et PostgreSQL répondent. Garde une seule instance pour l’instant : les sessions, la progression et les fichiers temporaires des téléchargements sont conservés en mémoire ou sur le disque local du processus.
 
-## Cookies (facultatif)
+## Cookies YouTube sur Railway
 
-Certains sites, notamment YouTube, peuvent nécessiter des cookies. Le serveur recherche les cookies dans l’ordre suivant :
+Si YouTube affiche « Sign in to confirm you're not a bot », il bloque la requête du serveur ou exige une session connectée. Les réglages yt-dlp seuls ne peuvent pas garantir l’accès. Le serveur sait utiliser un fichier de cookies, mais Railway ne peut pas lire ceux de ton navigateur automatiquement.
 
-1. `YTDLP_COOKIES_B64` : contenu du fichier de cookies encodé en Base64 (pratique pour un déploiement).
-2. `YTDLP_COOKIES` : chemin vers un fichier de cookies.
-3. Un fichier `cookies.txt` placé à côté de `server.js`.
+Pour configurer l’instance :
 
-Gardez vos cookies secrets : ne les publiez pas et ne les ajoutez pas au dépôt. Le fichier `cookies.txt` doit rester local ou être fourni de manière sécurisée à l’environnement d’exécution.
+1. Utilise de préférence un compte Google secondaire dédié à ce service. Toute personne autorisée à lancer une extraction peut provoquer des requêtes YouTube avec la session fournie au serveur.
+2. Connecte ce compte à YouTube et exporte ses cookies au format Netscape `cookies.txt`. Pour les recommandations yt-dlp sur l’export et les cookies qui expirent ou tournent, consulte [Exporting YouTube cookies](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies).
+3. Sur Windows, encode le fichier en Base64 et copie le résultat dans le presse-papiers :
+
+   ```powershell
+   [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\chemin\cookies.txt")) | Set-Clipboard
+   ```
+
+4. Dans Railway, ouvre le service web **Mediadownloader** → **Variables** et ajoute `YTDLP_COOKIES_B64`. Colle la valeur, enregistre, puis déploie les changements. Utilise une variable secrète/scellée si l’option est disponible. Railway injecte ses variables dans l’environnement du service au déploiement : [documentation Railway sur les variables](https://docs.railway.com/variables).
+5. Supprime le fichier exporté lorsque tu n’en as plus besoin et efface le presse-papiers. Si YouTube recommence à bloquer, renouvelle les cookies et remplace la variable.
+
+Les cookies sont des identifiants de session : quiconque les obtient peut agir comme le compte connecté. Ne les envoie jamais dans un chat, ne les ajoute pas au dépôt Git et ne les affiche pas dans un journal. Base64 n’est pas du chiffrement. L’application accepte le contenu encodé dans `YTDLP_COOKIES_B64`, ou un chemin local `YTDLP_COOKIES` ; en dernier recours elle cherche `cookies.txt` à côté de `server.js`.
 
 ## Utilisation responsable
 
