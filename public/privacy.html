@@ -22,7 +22,7 @@
     <header class="legal-header">
       <p class="legal-eyebrow">Transparence & données</p>
       <h1 class="legal-title">Politique de confidentialité</h1>
-      <p class="legal-updated">Mise à jour le 23 novembre 2026</p>
+      <p class="legal-updated">Mise à jour le 24 novembre 2026</p>
     </header>
 
     <aside class="legal-note">
@@ -42,6 +42,7 @@
           <li><strong>Analyse et téléchargement :</strong> lien fourni, options choisies et informations du média nécessaires à l’aperçu et à la préparation du fichier. L’application ne conserve pas d’historique des liens ni des téléchargements.</li>
           <li><strong>Sécurité :</strong> l’adresse réseau observée par le serveur est utilisée temporairement pour limiter les tentatives de connexion et d’inscription. Les données techniques d’une requête peuvent également comprendre son heure, son chemin, son statut et le navigateur utilisé.</li>
           <li><strong>Cookie de session :</strong> après connexion, un identifiant aléatoire permet de garder ta session ouverte. Il ne contient pas ton mot de passe.</li>
+          <li><strong>Cookies YouTube fournis volontairement :</strong> si tu coches la case de consentement et envoies un fichier depuis ton profil, seuls les cookies des domaines <code>youtube.com</code> sont conservés. La date, la version du consentement et, le cas échéant, son retrait sont aussi enregistrés.</li>
         </ul>
         <p>Le lien est transmis au serveur pour être traité. Évite de soumettre un lien contenant un mot de passe, un jeton privé ou toute autre information que tu ne souhaites pas voir traitée par le service.</p>
       </section>
@@ -49,6 +50,7 @@
       <section class="legal-section">
         <h2>Utilisation et base juridique</h2>
         <p>Les données du compte servent à créer et sécuriser ton accès. Le lien et les options servent uniquement à analyser le média demandé et à préparer le téléchargement. Les données techniques servent à protéger le service contre les tentatives abusives et les erreurs.</p>
+        <p>L’ajout de cookies YouTube est facultatif : tu peux utiliser les autres fonctions sans les fournir. Si tu les ajoutes, ils sont traités uniquement pour authentifier tes propres demandes YouTube, sur la base de ton consentement. Tu peux retirer ce consentement depuis ton profil, sans perdre l’accès au reste du service.</p>
         <p>Lorsque le RGPD s’applique, le compte et le traitement demandé reposent sur la fourniture du service que tu sollicites ; les contrôles de sécurité reposent sur l’intérêt légitime à protéger l’application et ses utilisateurs.</p>
       </section>
 
@@ -56,7 +58,7 @@
         <h2>Destinataires et hébergement</h2>
         <ul>
           <li><strong>Railway</strong> héberge l’application et sa base PostgreSQL. Le service web est déployé dans la région US East. Railway traite aussi des données techniques et des journaux de plateforme ; ses propres opérations peuvent avoir lieu aux États-Unis. Consulte la <a href="https://railway.com/legal/privacy" target="_blank" rel="noopener noreferrer">politique de confidentialité de Railway</a> et son <a href="https://railway.com/legal/dpa" target="_blank" rel="noopener noreferrer">accord de traitement des données</a>.</li>
-          <li><strong>Le site d’origine du média et ses réseaux de diffusion</strong> sont contactés par le serveur pour récupérer les informations et le fichier. Ils reçoivent la requête depuis l’infrastructure du serveur et appliquent leurs propres politiques.</li>
+          <li><strong>Le site d’origine du média et ses réseaux de diffusion</strong> sont contactés par le serveur pour récupérer les informations et le fichier. Ils reçoivent la requête depuis l’infrastructure du serveur et appliquent leurs propres politiques. Pour une demande YouTube authentifiée, YouTube reçoit les cookies YouTube que tu as fournis pour ton compte.</li>
           <li><strong>Google Fonts</strong> fournit les polices de l’interface. Le navigateur contacte Google et peut lui transmettre des informations techniques, notamment son adresse IP. Consulte la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">politique de confidentialité de Google</a>.</li>
         </ul>
         <p>Les requêtes d’analyse et de téléchargement transportent le lien soumis. Railway documente des journaux HTTP contenant notamment le chemin demandé, l’adresse IP, le navigateur, l’heure et le statut. Selon la manière dont le chemin est journalisé, le lien transmis peut donc figurer dans les journaux de la plateforme. Leur durée de conservation dépend du plan Railway ; le plan d’essai indique actuellement sept jours. Voir la <a href="https://docs.railway.com/observability/logs" target="_blank" rel="noopener noreferrer">documentation sur les journaux Railway</a>.</p>
@@ -68,6 +70,7 @@
           <li>Les informations du compte restent dans PostgreSQL jusqu’à la suppression du compte.</li>
           <li>Les liens et options ne sont pas conservés comme historique. Les informations de progression sont gardées en mémoire pendant le traitement ; les travaux expirent au plus tard après quinze minutes.</li>
           <li>Les fichiers téléchargés sont temporaires sur le serveur et supprimés après leur transfert. Les fichiers résiduels sont nettoyés périodiquement.</li>
+          <li>Les cookies YouTube enregistrés sont chiffrés dans PostgreSQL et conservés jusqu’à ce que tu les remplaces, les supprimes ou retires ton consentement. Pour une extraction, ils sont déchiffrés temporairement dans un fichier du serveur, puis ce fichier est supprimé à la fin du traitement. La trace minimale du consentement et de son retrait est conservée tant que ton compte existe.</li>
           <li>Les sessions sont gardées en mémoire pour sept jours au maximum et disparaissent au redémarrage du serveur.</li>
           <li>Les compteurs utilisés pour limiter les tentatives de connexion expirent après quinze minutes.</li>
           <li>Les journaux conservés par Railway suivent la durée de rétention de son plan et les règles de sa plateforme.</li>
@@ -76,12 +79,13 @@
 
       <section class="legal-section">
         <h2>Cookies</h2>
-        <p>Le site utilise uniquement un cookie fonctionnel de session : il est HTTP-only, utilise SameSite et, sur la connexion HTTPS, l’attribut Secure. Sa durée maximale est de sept jours. Aucun cookie publicitaire ou de mesure d’audience n’est utilisé. L’exploitant peut, si nécessaire, fournir au serveur ses propres cookies de plateforme pour accéder à un site source ; les cookies de ton navigateur ne sont pas transmis à yt-dlp.</p>
+        <p>Le navigateur reçoit uniquement le cookie fonctionnel de session du site : il est HTTP-only, utilise SameSite et, sur la connexion HTTPS, l’attribut Secure. Sa durée maximale est de sept jours. Aucun cookie publicitaire ou de mesure d’audience n’est utilisé.</p>
+        <p>Les cookies YouTube de ton compte sont distincts du cookie de session Media Downloader. Ils ne sont envoyés au serveur que si tu choisis un fichier et coches séparément la case de consentement. Le serveur filtre les entrées pour ne garder que celles de <code>youtube.com</code>, les chiffre avec AES-256-GCM en base de données et les déchiffre temporairement uniquement pour tes propres demandes YouTube. Le responsable du serveur peut techniquement y accéder pendant leur traitement ; ce n’est pas un chiffrement de bout en bout. Le fichier est retiré de ton profil dès que tu le supprimes ou retires ton consentement.</p>
       </section>
 
       <section class="legal-section">
         <h2>Tes choix et tes droits</h2>
-        <p>Tu peux modifier ton nom affiché et ton mot de passe depuis ton profil, ou te déconnecter. Pour consulter, rectifier ou supprimer les données de ton compte, ou exercer les autres droits prévus par la loi applicable, écris à <a href="mailto:araledaril@gmail.com">araledaril@gmail.com</a>. La suppression d’un compte est effectuée par l’exploitant après vérification de la demande.</p>
+        <p>Tu peux modifier ton nom affiché et ton mot de passe depuis ton profil, ou te déconnecter. Tu peux à tout moment retirer ton consentement et supprimer tes cookies YouTube depuis cette même page. Pour consulter, rectifier ou supprimer les autres données de ton compte, ou exercer les autres droits prévus par la loi applicable, écris à <a href="mailto:araledaril@gmail.com">araledaril@gmail.com</a>. La suppression d’un compte est effectuée par l’exploitant après vérification de la demande.</p>
         <p>Si le RGPD s’applique à ta situation, tu peux aussi déposer une réclamation auprès de l’autorité de contrôle compétente. En France, la <a href="https://www.cnil.fr/fr/les-droits-des-personnes-sur-leurs-donnees" target="_blank" rel="noopener noreferrer">CNIL présente les droits des personnes</a>.</p>
       </section>
 

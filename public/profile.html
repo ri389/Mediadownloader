@@ -67,6 +67,26 @@
           <button class="auth-submit" type="submit">Modifier le mot de passe <span aria-hidden="true">→</span></button>
         </form>
       </section>
+
+      <section class="profile-card profile-cookie-card">
+        <p class="legal-eyebrow">Optionnel · YouTube</p>
+        <h2>Mes cookies YouTube</h2>
+        <p class="profile-help">Tu peux utiliser le service sans les fournir. Si tu les ajoutes, le serveur filtre le fichier pour ne garder que les cookies du domaine YouTube, les chiffre dans la base de données et les déchiffre temporairement pour tes propres requêtes. Le responsable du serveur peut techniquement y accéder pendant le traitement : ces cookies ouvrent ta session YouTube.</p>
+        <p class="cookie-state" id="youtubeCookiesState" role="status" aria-live="polite">Vérification du stockage sécurisé…</p>
+        <form id="youtubeCookiesForm" class="auth-form">
+          <label class="auth-field">
+            <span>Fichier exporté au format cookies.txt</span>
+            <input id="youtubeCookiesFile" name="youtubeCookiesFile" type="file" accept=".txt,text/plain" required />
+            <small>Exporte uniquement les cookies du domaine youtube.com. Taille maximale : 256 Ko.</small>
+          </label>
+          <label class="cookie-consent">
+            <input id="youtubeCookiesConsent" type="checkbox" required />
+            <span>Je confirme être autorisé·e à utiliser ce compte et consens à envoyer et stocker ses cookies pour authentifier mes propres demandes YouTube. Je peux retirer mon consentement et les supprimer depuis ce profil. <a href="privacy.html">Lire la politique de confidentialité</a>.</span>
+          </label>
+          <button class="auth-submit" id="saveYoutubeCookiesButton" type="submit">Enregistrer mes cookies YouTube <span aria-hidden="true">→</span></button>
+        </form>
+        <button class="secondary-button cookie-remove" id="removeYoutubeCookiesButton" type="button" hidden>Retirer mon consentement et supprimer mes cookies</button>
+      </section>
     </div>
 
     <footer class="footer">

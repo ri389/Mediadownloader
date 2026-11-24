@@ -19,6 +19,14 @@ const SESSION_COOKIE = "media_session";
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const USER_COLUMNS = `id, username, display_name AS "displayName", password_hash AS "passwordHash", created_at AS "createdAt"`;
 const MAX_BYTES = 500 * 1024 * 1024; // 500 Mo
+const MAX_YOUTUBE_COOKIE_FILE_BYTES = 256 * 1024;
+const YOUTUBE_COOKIE_CONSENT_VERSION = "2026-11-24-v1";
+const YOUTUBE_COOKIES_ENCRYPTION_KEY = (() => {
+  const encoded = String(process.env.YOUTUBE_COOKIES_ENCRYPTION_KEY || "").trim();
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return null;
+  const key = Buffer.from(encoded, "base64");
+  return key.length === 32 ? key : null;
+})();
 const MAX_ACTIVE_JOBS = 2;
 const MAX_ACTIVE_STREAMS = 4;
 const ACCOUNT_API_PATHS = new Set([
@@ -29,6 +37,7 @@ const ACCOUNT_API_PATHS = new Set([
   "/api/auth/logout",
   "/api/profile",
   "/api/profile/password",
+  "/api/profile/youtube-cookies",
 ]);
 const PUBLIC_DIR = path.join(__dirname, "public");
 const TMP_DIR = path.join(os.tmpdir(), "grab-media");
@@ -175,6 +184,22 @@ async function initializeDatabase() {
     CREATE TABLE IF NOT EXISTS app_migrations (
       name TEXT PRIMARY KEY,
       applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_youtube_cookies (
+      user_id UUID PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,
+      encrypted_cookies BYTEA,
+      iv BYTEA,
+      auth_tag BYTEA,
+      consent_version TEXT NOT NULL,
+      consented_at TIMESTAMPTZ NOT NULL,
+      withdrawn_at TIMESTAMPTZ,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK (
+        (encrypted_cookies IS NULL AND iv IS NULL AND auth_tag IS NULL) OR
+        (encrypted_cookies IS NOT NULL AND iv IS NOT NULL AND auth_tag IS NOT NULL)
+      )
     )
   `);
   await migrateLegacyUsers();
@@ -367,6 +392,111 @@ async function readJsonBody(req) {
   }
 }
 
+async function readTextBody(req, maxBytes) {
+  if (!(req.headers["content-type"] || "").toLowerCase().startsWith("text/plain")) {
+    throw new HttpError(400, "Le fichier doit être envoyé au format texte brut.");
+  }
+  const contentLength = Number(req.headers["content-length"] || 0);
+  if (contentLength > maxBytes) throw new HttpError(413, "Le fichier cookies.txt dépasse la taille maximale de 256 Ko.");
+
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > maxBytes) throw new HttpError(413, "Le fichier cookies.txt dépasse la taille maximale de 256 Ko.");
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+function requireSameOrigin(req) {
+  const origin = String(req.headers.origin || "");
+  const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim();
+  const protocol = req.socket.encrypted || forwardedProto === "https" ? "https" : "http";
+  const expectedOrigin = `${protocol}://${req.headers.host || ""}`;
+  try {
+    if (!origin || new URL(origin).origin !== new URL(expectedOrigin).origin) throw new Error("origin mismatch");
+  } catch {
+    throw new HttpError(403, "Origine de la requête refusée.");
+  }
+}
+
+function keepYoutubeCookieRows(contents) {
+  const normalized = String(contents || "").replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+  if (Buffer.byteLength(normalized, "utf8") > MAX_YOUTUBE_COOKIE_FILE_BYTES) {
+    throw new HttpError(413, "Le fichier cookies.txt dépasse la taille maximale de 256 Ko.");
+  }
+  if (normalized.includes("\0")) throw new HttpError(400, "Le fichier cookies.txt n’est pas valide.");
+
+  const youtubeRows = [];
+  for (const line of normalized.split("\n")) {
+    if (!line.trim() || (line.startsWith("#") && !line.startsWith("#HttpOnly_"))) continue;
+    const fields = line.split("\t");
+    if (fields.length !== 7) throw new HttpError(400, "Le fichier doit être un export cookies.txt au format Netscape.");
+
+    const domain = fields[0].replace(/^#HttpOnly_/i, "").replace(/^\./, "").toLowerCase();
+    const isYoutubeDomain = domain === "youtube.com" || domain.endsWith(".youtube.com");
+    if (!isYoutubeDomain) continue;
+    if (!fields[2].startsWith("/") || !["TRUE", "FALSE"].includes(fields[1].toUpperCase()) || !["TRUE", "FALSE"].includes(fields[3].toUpperCase())) {
+      throw new HttpError(400, "Le fichier cookies.txt contient une ligne invalide.");
+    }
+    youtubeRows.push(line);
+  }
+
+  if (!youtubeRows.length) {
+    throw new HttpError(400, "Aucun cookie YouTube trouvé. Exporte les cookies des domaines youtube.com uniquement.");
+  }
+  return `# Netscape HTTP Cookie File\n${youtubeRows.join("\n")}\n`;
+}
+
+function encryptYoutubeCookies(contents) {
+  if (!YOUTUBE_COOKIES_ENCRYPTION_KEY) {
+    throw new HttpError(503, "Le stockage chiffré des cookies n’est pas encore activé sur ce service.");
+  }
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", YOUTUBE_COOKIES_ENCRYPTION_KEY, iv);
+  const encryptedCookies = Buffer.concat([cipher.update(contents, "utf8"), cipher.final()]);
+  return { encryptedCookies, iv, authTag: cipher.getAuthTag() };
+}
+
+function decryptYoutubeCookies(row) {
+  if (!YOUTUBE_COOKIES_ENCRYPTION_KEY) throw new HttpError(503, "Le stockage chiffré des cookies n’est pas activé.");
+  try {
+    const decipher = crypto.createDecipheriv("aes-256-gcm", YOUTUBE_COOKIES_ENCRYPTION_KEY, row.iv);
+    decipher.setAuthTag(row.authTag);
+    return Buffer.concat([decipher.update(row.encryptedCookies), decipher.final()]).toString("utf8");
+  } catch {
+    throw new HttpError(503, "Les cookies enregistrés ne peuvent pas être déchiffrés. Importe-les de nouveau depuis ton profil.");
+  }
+}
+
+async function createTemporaryYoutubeCookiesFile(userId, target) {
+  if (!userId || !YOUTUBE_COOKIES_ENCRYPTION_KEY || !isYoutubeTarget(target)) return null;
+  const result = await pool.query(
+    `SELECT encrypted_cookies AS "encryptedCookies", iv, auth_tag AS "authTag"
+     FROM user_youtube_cookies
+     WHERE user_id = $1 AND encrypted_cookies IS NOT NULL
+       AND withdrawn_at IS NULL AND consent_version = $2`,
+    [userId, YOUTUBE_COOKIE_CONSENT_VERSION],
+  );
+  if (!result.rowCount) return null;
+
+  const contents = decryptYoutubeCookies(result.rows[0]);
+  const filePath = path.join(TMP_DIR, `media-youtube-cookies-${process.pid}-${crypto.randomBytes(12).toString("hex")}.txt`);
+  try {
+    fs.writeFileSync(filePath, contents, { encoding: "utf8", mode: 0o600, flag: "wx" });
+  } catch (err) {
+    removeTemporaryYoutubeCookiesFile(filePath);
+    throw err;
+  }
+  return filePath;
+}
+
+function removeTemporaryYoutubeCookiesFile(filePath) {
+  if (!filePath) return;
+  try { fs.unlinkSync(filePath); } catch {}
+}
+
 function sendJson(res, status, data, headers = {}) {
   const body = JSON.stringify(data);
   res.writeHead(status, {
@@ -468,6 +598,69 @@ async function handleAccountApi(req, res, parsedReq) {
   }
 
   const auth = await readSession(req);
+  if (pathname === "/api/profile/youtube-cookies") {
+    if (!auth) return sendJson(res, 401, { error: "Connexion requise." });
+
+    if (req.method === "GET") {
+      const result = await pool.query(
+        `SELECT encrypted_cookies IS NOT NULL AS "hasCookies", consented_at AS "consentedAt",
+                withdrawn_at AS "withdrawnAt", consent_version AS "consentVersion"
+         FROM user_youtube_cookies WHERE user_id = $1`,
+        [auth.user.id],
+      );
+      const row = result.rows[0];
+      return sendJson(res, 200, {
+        enabled: Boolean(YOUTUBE_COOKIES_ENCRYPTION_KEY),
+        hasCookies: Boolean(row?.hasCookies),
+        consentedAt: row?.consentedAt || null,
+        withdrawnAt: row?.withdrawnAt || null,
+        consentVersion: row?.consentVersion || null,
+      });
+    }
+
+    if (req.method === "PUT") {
+      requireSameOrigin(req);
+      if (req.headers["x-mediadownloader-consent"] !== YOUTUBE_COOKIE_CONSENT_VERSION) {
+        return sendJson(res, 400, { error: "Coche la case de consentement avant d’envoyer tes cookies." });
+      }
+      if (!YOUTUBE_COOKIES_ENCRYPTION_KEY) {
+        return sendJson(res, 503, { error: "Le stockage chiffré des cookies n’est pas encore activé sur ce service." });
+      }
+
+      const rawCookieFile = await readTextBody(req, MAX_YOUTUBE_COOKIE_FILE_BYTES);
+      const youtubeCookieFile = keepYoutubeCookieRows(rawCookieFile);
+      const encrypted = encryptYoutubeCookies(youtubeCookieFile);
+      await pool.query(
+        `INSERT INTO user_youtube_cookies
+           (user_id, encrypted_cookies, iv, auth_tag, consent_version, consented_at, withdrawn_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, NOW(), NULL, NOW())
+         ON CONFLICT (user_id) DO UPDATE SET
+           encrypted_cookies = EXCLUDED.encrypted_cookies,
+           iv = EXCLUDED.iv,
+           auth_tag = EXCLUDED.auth_tag,
+           consent_version = EXCLUDED.consent_version,
+           consented_at = NOW(),
+           withdrawn_at = NULL,
+           updated_at = NOW()`,
+        [auth.user.id, encrypted.encryptedCookies, encrypted.iv, encrypted.authTag, YOUTUBE_COOKIE_CONSENT_VERSION],
+      );
+      return sendJson(res, 200, { ok: true, hasCookies: true });
+    }
+
+    if (req.method === "DELETE") {
+      requireSameOrigin(req);
+      await pool.query(
+        `UPDATE user_youtube_cookies
+         SET encrypted_cookies = NULL, iv = NULL, auth_tag = NULL, withdrawn_at = NOW(), updated_at = NOW()
+         WHERE user_id = $1 AND encrypted_cookies IS NOT NULL`,
+        [auth.user.id],
+      );
+      return sendJson(res, 200, { ok: true, hasCookies: false });
+    }
+
+    return sendJson(res, 405, { error: "Méthode non autorisée." });
+  }
+
   if (pathname === "/api/profile" && req.method === "GET") {
     if (!auth) return sendJson(res, 401, { error: "Connexion requise." });
     return sendJson(res, 200, { ok: true, user: publicUser(auth.user) });
@@ -1006,65 +1199,22 @@ function buildYtFormatSelector(options) {
   return [`bv*${heightFilter}+ba`, `b${heightFilter}`, "bv*+ba/b"].join("/");
 }
 
-// Resolve cookies file path once at startup
-let COOKIES_FILE_PATH = null;
-let TEMP_COOKIES_PATH = null;
+if (!YOUTUBE_COOKIES_ENCRYPTION_KEY) {
+  console.warn("[cookies] YOUTUBE_COOKIES_ENCRYPTION_KEY is missing or invalid; per-user YouTube cookies are disabled.");
+}
 
-(function initCookies() {
-  // Priority 1: base64-encoded cookies content in env var (ideal for Render/cloud)
-  if (process.env.YTDLP_COOKIES_B64) {
-    try {
-      const decoded = Buffer.from(process.env.YTDLP_COOKIES_B64, "base64").toString("utf-8");
-      const tmpCookies = path.join(
-        os.tmpdir(),
-        `ytdlp_cookies_${process.pid}_${crypto.randomBytes(8).toString("hex")}.txt`
-      );
-      fs.writeFileSync(tmpCookies, decoded, { encoding: "utf-8", mode: 0o600 });
-      COOKIES_FILE_PATH = tmpCookies;
-      TEMP_COOKIES_PATH = tmpCookies;
-      console.log("[cookies] Loaded from YTDLP_COOKIES_B64 →", tmpCookies);
-    } catch (e) {
-      console.warn("[cookies] Failed to decode YTDLP_COOKIES_B64:", e.message);
-    }
-  }
-  // Priority 2: path to cookies file
-  if (!COOKIES_FILE_PATH && process.env.YTDLP_COOKIES) {
-    if (fs.existsSync(process.env.YTDLP_COOKIES)) {
-      COOKIES_FILE_PATH = process.env.YTDLP_COOKIES;
-      console.log("[cookies] Loaded from YTDLP_COOKIES env path →", COOKIES_FILE_PATH);
-    } else {
-      console.warn("[cookies] YTDLP_COOKIES path not found:", process.env.YTDLP_COOKIES);
-    }
-  }
-  // Priority 3: cookies.txt beside server.js
-  if (!COOKIES_FILE_PATH && fs.existsSync(path.join(__dirname, "cookies.txt"))) {
-    COOKIES_FILE_PATH = path.join(__dirname, "cookies.txt");
-    console.log("[cookies] Loaded from local cookies.txt →", COOKIES_FILE_PATH);
-  }
-  if (!COOKIES_FILE_PATH) {
-    console.warn("[cookies] No cookies found — YouTube may block server requests.");
-  }
-})();
-
-process.once("exit", () => {
-  if (!TEMP_COOKIES_PATH) return;
+function isYoutubeTarget(target) {
   try {
-    fs.unlinkSync(TEMP_COOKIES_PATH);
-  } catch {}
-});
+    const hostname = new URL(target).hostname.toLowerCase();
+    return hostname === "youtu.be" || hostname === "youtube.com" || hostname.endsWith(".youtube.com");
+  } catch {
+    return false;
+  }
+}
 
-function getCommonYtDlpArgs(target) {
+function getCommonYtDlpArgs(target, userCookieFile = null) {
   const args = ["--no-playlist", "--no-warnings", "-4"];
-  let hostname = "";
-  try {
-    hostname = new URL(target).hostname.toLowerCase();
-  } catch {}
-
-  if (
-    hostname === "youtu.be" ||
-    hostname === "youtube.com" ||
-    hostname.endsWith(".youtube.com")
-  ) {
+  if (isYoutubeTarget(target)) {
     // These YouTube clients and their matching user agent avoid datacenter bot detection.
     args.push(
       "--extractor-args",
@@ -1074,23 +1224,27 @@ function getCommonYtDlpArgs(target) {
     );
   }
 
-  if (COOKIES_FILE_PATH) {
-    args.push("--cookies", COOKIES_FILE_PATH);
-  }
+  if (userCookieFile && isYoutubeTarget(target)) args.push("--cookies", userCookieFile);
 
   return args;
 }
 
-async function inspectViaExtractor(target) {
+async function inspectViaExtractor(target, userId) {
   const cleanTarget = normalizeMediaUrl(target);
   await assertSafeUrl(cleanTarget);
 
-  const { stdout } = await runYtDlp([
-    ...getCommonYtDlpArgs(cleanTarget),
-    "--dump-single-json",
-    "--skip-download",
-    cleanTarget,
-  ]);
+  const userCookieFile = await createTemporaryYoutubeCookiesFile(userId, cleanTarget);
+  let stdout;
+  try {
+    ({ stdout } = await runYtDlp([
+      ...getCommonYtDlpArgs(cleanTarget, userCookieFile),
+      "--dump-single-json",
+      "--skip-download",
+      cleanTarget,
+    ]));
+  } finally {
+    removeTemporaryYoutubeCookiesFile(userCookieFile);
+  }
 
   let info;
   try {
@@ -1132,15 +1286,18 @@ async function inspectViaExtractor(target) {
   };
 }
 
-async function downloadViaExtractorToTempProgress(jobId, target, options, suggestedTitle) {
+async function downloadViaExtractorToTempProgress(jobId, target, options, suggestedTitle, userId) {
   const cleanTarget = normalizeMediaUrl(target);
   await assertSafeUrl(cleanTarget);
   const id = crypto.randomBytes(8).toString("hex");
   const outTemplate = path.join(TMP_DIR, `${id}.%(ext)s`);
   const opts = options || { mode: "video", height: 0, container: "mp4", audioFormat: "mp3" };
+  const job = activeJobs.get(jobId);
+  const cookieOwnerId = userId || job?.ownerId;
+  const userCookieFile = await createTemporaryYoutubeCookiesFile(cookieOwnerId, cleanTarget);
 
   const args = [
-    ...getCommonYtDlpArgs(cleanTarget),
+    ...getCommonYtDlpArgs(cleanTarget, userCookieFile),
     "--max-filesize",
     String(MAX_BYTES),
     "-o",
@@ -1168,8 +1325,6 @@ async function downloadViaExtractorToTempProgress(jobId, target, options, sugges
 
   args.push(cleanTarget);
 
-  const job = activeJobs.get(jobId);
-
   try {
     await runYtDlp(args, (prog) => {
       if (job) {
@@ -1185,6 +1340,8 @@ async function downloadViaExtractorToTempProgress(jobId, target, options, sugges
       for (const file of partialFiles) fs.unlinkSync(path.join(TMP_DIR, file));
     } catch {}
     throw err;
+  } finally {
+    removeTemporaryYoutubeCookiesFile(userCookieFile);
   }
 
   const tempExtensions = [".part", ".ytdl", ".temp", ".tmp", ".unc"];
@@ -1220,8 +1377,8 @@ async function downloadViaExtractorToTempProgress(jobId, target, options, sugges
   return { filePath, size: stat.size, ext, filename };
 }
 
-async function downloadViaExtractorToTemp(target, options) {
-  return downloadViaExtractorToTempProgress(null, target, options);
+async function downloadViaExtractorToTemp(target, options, userId) {
+  return downloadViaExtractorToTempProgress(null, target, options, null, userId);
 }
 
 function fetchRemote(targetUrl, method = "GET", redirectCount = 0) {
@@ -1389,7 +1546,7 @@ async function inspectDirect(target) {
   };
 }
 
-async function handleInspect(req, res, target) {
+async function handleInspect(req, res, target, userId) {
   await assertSafeUrl(target);
 
   // 1) Média binaire direct (content-type image/video/audio)
@@ -1404,7 +1561,7 @@ async function handleInspect(req, res, target) {
 
   // 2) Extracteur multi-sites (YouTube, TikTok, Insta, Pinterest, …)
   try {
-    return sendJson(res, 200, await inspectViaExtractor(target));
+    return sendJson(res, 200, await inspectViaExtractor(target, userId));
   } catch (extractorErr) {
     return sendJson(res, 400, {
       error:
@@ -1504,7 +1661,7 @@ function mimeFromExt(ext) {
   return map[ext.toLowerCase()] || "application/octet-stream";
 }
 
-async function handleExtractDownload(req, res, target, options, suggestedTitle) {
+async function handleExtractDownload(req, res, target, options, suggestedTitle, userId) {
   const opts = options || {
     mode: "video",
     height: 0,
@@ -1512,7 +1669,7 @@ async function handleExtractDownload(req, res, target, options, suggestedTitle) 
     audioFormat: "mp3",
   };
 
-  const { filePath, size, ext } = await downloadViaExtractorToTemp(target, opts);
+  const { filePath, size, ext } = await downloadViaExtractorToTemp(target, opts, userId);
   const filename =
     sanitizeFilename(suggestedTitle || "media") +
     (ext || (opts.mode === "audio" ? `.${opts.audioFormat}` : `.${opts.container}`));
@@ -1575,7 +1732,7 @@ const server = http.createServer(async (req, res) => {
     if (parsedReq.pathname === "/api/inspect" && req.method === "GET") {
       const target = parsedReq.searchParams.get("url");
       if (!target) return sendJson(res, 400, { error: "Paramètre url manquant." });
-      return await handleInspect(req, res, target);
+      return await handleInspect(req, res, target, auth.user.id);
     }
 
     if (parsedReq.pathname === "/api/preview" && req.method === "GET") {
@@ -1621,7 +1778,7 @@ const server = http.createServer(async (req, res) => {
 
       activeJobs.set(jobId, job);
 
-      downloadViaExtractorToTempProgress(jobId, target, options, suggestedTitle).catch((err) => {
+      downloadViaExtractorToTempProgress(jobId, target, options, suggestedTitle, auth.user.id).catch((err) => {
         job.status = "error";
         job.error = err.message || "Échec du téléchargement sur le serveur.";
       });
