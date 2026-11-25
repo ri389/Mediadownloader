@@ -1055,26 +1055,15 @@ process.once("exit", () => {
 
 function getCommonYtDlpArgs(target) {
   const args = ["--no-playlist", "--no-warnings", "-4"];
-  let hostname = "";
+  let isYoutube = false;
   try {
-    hostname = new URL(target).hostname.toLowerCase();
+    const hostname = new URL(target).hostname.toLowerCase();
+    isYoutube = hostname === "youtu.be" || hostname === "youtube.com" || hostname.endsWith(".youtube.com");
   } catch {}
 
-  if (
-    hostname === "youtu.be" ||
-    hostname === "youtube.com" ||
-    hostname.endsWith(".youtube.com")
-  ) {
-    // These YouTube clients and their matching user agent avoid datacenter bot detection.
-    args.push(
-      "--extractor-args",
-      "youtube:player_client=ios,tv_embedded,android",
-      "--add-headers",
-      "User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-    );
-  }
-
-  if (COOKIES_FILE_PATH) {
+  // Let yt-dlp select its maintained YouTube clients. Forced legacy mobile
+  // clients can return no player response and do not support account cookies.
+  if (isYoutube && COOKIES_FILE_PATH) {
     args.push("--cookies", COOKIES_FILE_PATH);
   }
 

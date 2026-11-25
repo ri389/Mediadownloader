@@ -244,6 +244,9 @@ function explainExtractionError(message) {
   if (/sign in to confirm\s+(?:you['’]re|you are)\s+not a bot/i.test(error)) {
     return "YouTube bloque l’accès depuis le serveur. L’exploitant doit configurer des cookies YouTube valides dans la variable YTDLP_COOKIES_B64 de Railway, puis redéployer. Ces cookies sont sensibles : ne les partage pas dans un message ou un dépôt.";
   }
+  if (/failed to extract any player response/i.test(error)) {
+    return "YouTube n’a pas fourni de réponse de lecteur exploitable. Réessaie plus tard. Si l’erreur revient sur plusieurs vidéos, l’extracteur YouTube du serveur doit être actualisé ; certaines vidéos peuvent aussi être indisponibles ou bloquées depuis Railway.";
+  }
   return error;
 }
 

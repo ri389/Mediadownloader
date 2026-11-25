@@ -15,7 +15,7 @@ La disponibilité peut varier selon le site, ses restrictions et la version de `
 
 ## Prérequis
 
-- Node.js 20 ou version ultérieure.
+- Node.js 22 ou version ultérieure.
 - PostgreSQL 16 ou version ultérieure.
 - Python 3.
 - `yt-dlp` installé et disponible via Python (`python3 -m yt_dlp`) ou comme commande `yt-dlp`.
@@ -54,7 +54,7 @@ Si nécessaire, indiquez le chemin de l’interpréteur Python avec `GRAB_PYTHON
 
 ## Docker
 
-Le dépôt contient un `Dockerfile` qui installe Node.js, Python, FFmpeg et `yt-dlp` :
+Le dépôt contient un `Dockerfile` qui installe Node.js, Python, FFmpeg et la branche nightly de `yt-dlp`. Le projet yt-dlp recommande cette branche pour suivre les changements fréquents des plateformes : [canaux de publication yt-dlp](https://github.com/yt-dlp/yt-dlp#update).
 
 Copie `.env.example` vers `.env`, remplace les deux valeurs par des secrets uniques, puis démarre l’application et PostgreSQL :
 

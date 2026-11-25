@@ -1,4 +1,4 @@
-FROM node:20-slim
+FROM node:22-slim
 
 # Installer Python 3, ffmpeg, curl et ca-certificates
 RUN apt-get update && apt-get install -y \
@@ -9,8 +9,10 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Mettre à jour pip et installer la dernière version de yt-dlp
-RUN pip3 install --break-system-packages --no-cache-dir -U "yt-dlp[default,curl-cffi]"
+# Installer la branche nightly, recommandée par yt-dlp quand les sites changent
+# plus vite que la branche stable.
+RUN pip3 install --break-system-packages --no-cache-dir --pre -U "yt-dlp[default,curl-cffi]" \
+    && python3 -m yt_dlp --version
 
 WORKDIR /app
 
