@@ -861,9 +861,16 @@ function runYtDlp(args, onProgress, maxOutput) {
         }
         if (code === 0) resolve({ stdout, stderr });
         else {
-          const lines = (stderr || stdout).trim().split("\n").filter(Boolean);
-          const msg = lines[lines.length - 1] || "Site non supporté ou média inaccessible.";
-          reject(new Error(msg.replace(/^ERROR:\s*/i, "")));
+          const lines = (stderr || stdout).trim().split(/\r?\n/).filter(Boolean);
+          const geoHintIndex = lines.findIndex((line) => /You might want to use a VPN or a proxy server/i.test(line));
+          const errorLines = geoHintIndex >= 0
+            ? lines.slice(Math.max(0, geoHintIndex - 2), geoHintIndex + 1)
+            : lines.slice(-1);
+          const msg = errorLines
+            .map((line) => line.replace(/^ERROR:\s*/i, "").trim())
+            .filter(Boolean)
+            .join(" ") || "Site non supporté ou média inaccessible.";
+          reject(new Error(msg));
         }
       });
     });

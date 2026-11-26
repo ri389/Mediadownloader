@@ -242,7 +242,10 @@ function setStatus(message, ok = false) {
 function explainExtractionError(message) {
   const error = String(message || "Erreur inattendue.");
   if (/sign in to confirm\s+(?:you['’]re|you are)\s+not a bot/i.test(error)) {
-    return "YouTube bloque l’accès depuis le serveur. L’exploitant doit configurer des cookies YouTube valides dans la variable YTDLP_COOKIES_B64 de Railway, puis redéployer. Ces cookies sont sensibles : ne les partage pas dans un message ou un dépôt.";
+    return "YouTube refuse la requête du serveur et demande une session. Dans Railway, vérifie les journaux du dernier démarrage : « Loaded from YTDLP_COOKIES_B64 » confirme que le fichier a été chargé. S’il est chargé, il peut être expiré ou YouTube peut bloquer les requêtes depuis Railway. Ne partage jamais ces cookies.";
+  }
+  if (/you might want to use a vpn or a proxy server|geo[- ]?restrict|not available (?:in your country|from your location)/i.test(error)) {
+    return "La plateforme signale une restriction régionale ou indique que l’adresse IP du serveur n’est pas autorisée pour ce média. L’accès dépend des règles et de la région définies par la plateforme ; le service ne peut pas les contourner.";
   }
   if (/failed to extract any player response/i.test(error)) {
     return "YouTube n’a pas fourni de réponse de lecteur exploitable. Réessaie plus tard. Si l’erreur revient sur plusieurs vidéos, l’extracteur YouTube du serveur doit être actualisé ; certaines vidéos peuvent aussi être indisponibles ou bloquées depuis Railway.";
@@ -369,6 +372,11 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const url = urlInput.value.trim();
   if (!url) return;
+  if ((url.match(/https?:\/\//gi) || []).length > 1) {
+    setStatus("Le champ contient plusieurs liens collés. Garde un seul lien, puis relance l’analyse.");
+    urlInput.focus();
+    return;
+  }
 
   clearResult();
   setStatus("Analyse du lien…", true);

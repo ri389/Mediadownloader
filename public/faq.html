@@ -55,7 +55,14 @@
       <details class="faq-item">
         <summary>Pourquoi YouTube refuse-t-il un lien ou affiche-t-il un message anti-bot ?</summary>
         <div class="faq-answer">
-          <p>La vidéo peut être privée, supprimée, limitée par région ou nécessiter une connexion. YouTube peut aussi bloquer les requêtes venant d’un serveur hébergé. Les cookies configurés par l’exploitant peuvent aider pour certaines requêtes, mais ne contournent pas toutes les restrictions et ne garantissent pas le téléchargement.</p>
+          <p>La vidéo peut être privée, supprimée, limitée par région ou nécessiter une connexion. YouTube peut aussi bloquer les requêtes venant d’un serveur hébergé. L’exploitant peut vérifier dans les journaux Railway si le message <code>[cookies] Loaded from YTDLP_COOKIES_B64</code> apparaît au démarrage. Ce message confirme que le fichier a été chargé, mais pas que la session est encore valide. YouTube peut l’avoir expirée ou bloquer l’adresse du serveur ; les cookies ne garantissent pas le téléchargement.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Que signifie le message sur un VPN ou un proxy ?</summary>
+        <div class="faq-answer">
+          <p>yt-dlp affiche ce message lorsqu’un site signale généralement une restriction géographique ou un refus lié à l’adresse IP qui fait la requête. Dans cette application, les requêtes partent du serveur Railway. Le message ne signifie pas qu’un VPN est configuré ou disponible ; le service ne contourne pas les restrictions de région imposées par les plateformes.</p>
         </div>
       </details>
 
